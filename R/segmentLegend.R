@@ -6,10 +6,10 @@ function (attribute,
                         bgc='#B0C4DEFF') {
 
 
-png(filename=paste(legendName,'.png',sep=""), width=220,
-       height=220,units = "px", bg="white")
-par(par(mai=c(0.25,1,0.25,0.25),
-omi=c(0.1,0.1,0.1,0.1)),bg=bgc)
+png(filename=paste(legendName,'.png',sep=""), width=300,
+       height=300,units = "px", bg="white")
+       
+ par(mar=c(2.1,5.1,2.1,5.1), bg=bgc)
 
 
 	niv  <- attribute

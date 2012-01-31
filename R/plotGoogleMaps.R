@@ -257,7 +257,8 @@ else if   (class(SP)[1]=="SpatialLines"){
                 
                 var<-paste(var,'var ',lineName,'=[] ; \n')
                 var1=""
-                xx<-PolyCol(attribute,colPalette)
+                cxx<-PolyCol(attribute,colPalette)
+                xx<- cxx$cols
                 for(i in 1:length(SP.ll@lines)){
                 lls<-(slot(SP.ll,"lines"))[[i]]
                 lonlat<-slot(slot(lls,"Lines")[[1]],"coords")
@@ -292,7 +293,8 @@ else if   (class(SP)[1]=="SpatialLinesDataFrame")     {
             textname<- paste(nameOfSP,'text',sep="")
             textnameW<-paste(textname,'W',sep="")
             att<-rep(NA,length(slot(SP.ll,"lines")))
-            divLegendImage<- paste(nameOfSP,'_Legend',sep="")
+            divLegendImage<-tempfile("Legend")  
+            divLegendImage<-substr(divLegendImage, start=regexpr("Legend",divLegendImage),stop=nchar(divLegendImage))
             legendboxname<-paste('box',divLegendImage,sep="")
             for(i in 1:length(SP.ll@data)) {
             if( identical(attribute,SP.ll@data[,i])){
@@ -310,9 +312,10 @@ else if   (class(SP)[1]=="SpatialLinesDataFrame")     {
             
             var<-paste(var,'var ',lineName,'=[] ; \n')
             var1=""
-            xx<-PolyCol(attribute,colPalette)
+            cxx<-PolyCol(attribute,colPalette)
+            xx<-cxx$cols
             swxx<-weightATR(attribute,strokeWeight)
-            pp<-lineLegend(attribute,colPalette=xx,linew=strokeWeight,legendName=divLegendImage)
+            pp<-lineLegend(cxx$att,colPalette=cxx$col.uniq,linew=strokeWeight,legendName=divLegendImage)
             for(i in 1:length(SP.ll@lines)){
             lls<-(slot(SP.ll,"lines"))[[i]]
             lonlat<-slot(slot(lls,"Lines")[[1]],"coords")
@@ -389,7 +392,8 @@ else if   (class(SP)[1]=="SpatialPolygons")             {
               
               var<-paste(var,'var ',polyName,'=[] ; \n')
               var1=""
-              xx<-PolyCol(attribute,colPalette)
+              cxx<-PolyCol(attribute,colPalette)
+              xx<-cxx$cols
               for(i in 1:length(SP.ll@polygons)){
               var1<-paste(var1,createPolygon(SP.ll@polygons[[i]],
                                        fillColor=xx[i],
@@ -433,7 +437,8 @@ else if   (class(SP)[1]=="SpatialPolygonsDataFrame")      {
                   polyName<-paste('poly',nameOfSP,sep="")
                   boxname<-paste(nameOfSP,'box',sep="")
                   textname<- paste(nameOfSP,'text',sep="")
-                  divLegendImage<- paste(nameOfSP,'_Legend',sep="")
+                  divLegendImage<-tempfile("Legend")  
+                  divLegendImage<-substr(divLegendImage, start=regexpr("Legend",divLegendImage),stop=nchar(divLegendImage))
                   legendboxname<-paste('box',divLegendImage,sep="")
                   textnameW<-paste(textname,'W',sep="")
                   
@@ -456,10 +461,11 @@ else if   (class(SP)[1]=="SpatialPolygonsDataFrame")      {
                   
                   var<-paste(var,'var ',polyName,'=[] ; \n')
                   var1=""
-                  xx<-PolyCol(attribute,colPalette)
+                  cxx<-PolyCol(attribute,colPalette)
+                  xx<-cxx$cols
 
                   
-                 pp<-polyLegend(attribute,colPalette=colPalette,legendName=divLegendImage,strokeColor=strokeColor)
+                 pp<-polyLegend(cxx$att,colPalette=cxx$col.uniq,legendName=divLegendImage,strokeColor=strokeColor)
                   
                   for(i in 1:length(SP.ll@polygons)){
                   var1<-paste(var1,createPolygon(SP.ll@polygons[[i]],
@@ -518,17 +524,19 @@ else if   (class(SP)[1]=="SpatialPolygonsDataFrame")      {
                                   \n </table> \n <hr> \n',sep="")
                                      }
 else if (class(SP)[1]=="SpatialPixelsDataFrame" || class(SP)[1]=="SpatialGridDataFrame") {
+                  
                 rasterName<-paste('raster',nameOfSP,sep="")
                 boxname<-paste(nameOfSP,'box',sep="")
-                divLegendImage<- paste(nameOfSP,'_Legend',sep="")
+                divLegendImage<-tempfile("Legend")  
+                divLegendImage<-substr(divLegendImage, start=regexpr("Legend",divLegendImage),stop=nchar(divLegendImage))
                 legendboxname<-paste('box',divLegendImage,sep="")
-                 textname<- paste(nameOfSP,'text',sep="")
+                textname<- paste(nameOfSP,'text',sep="")
                 
                 for(i in 1:length(SP.ll@data)) {
                 if( identical(attribute,SP.ll@data[,i])){
                  attributeName<-names(SP.ll@data)[i]  }
                 }
-                
+               
                 if (!is.list(previousMap)) {
                 var<-""
                 # Declare variables in JavaScript marker and map
@@ -610,7 +618,8 @@ endhtm<-paste(endhtm,'</div> \n </body>  \n  </html>')
 write(starthtm, filename,append=F)
 write(var, filename,append=TRUE)
 write(functions, filename,append=TRUE)
-write(endhtm, filename,append=TRUE)}
+write(endhtm, filename,append=TRUE)
+browseURL(filename)}
 
 
 x <- list(starthtm=starthtm,var=var, functions=functions,endhtm=endhtm)

@@ -84,7 +84,8 @@ attribute=SP@data[,zcol]
 polyName<-paste('poly',nameOfSP,sep="")
 boxname<-paste(nameOfSP,'box',sep="")
 textname<- paste(nameOfSP,'text',sep="")
-divLegendImage<- paste(nameOfSP,'_Legend',sep="")
+divLegendImage<-tempfile("Legend")  
+divLegendImage<-substr(divLegendImage, start=regexpr("Legend",divLegendImage),stop=nchar(divLegendImage))
 legendboxname<-paste('box',divLegendImage,sep="")
 textnameW<-paste(textname,'W',sep="")
 if(layerName==""){
@@ -116,8 +117,8 @@ var<-c(' \n var map \n')
 
 var<-paste(var,'var ',polyName,'=[] ; \n')
 var1=""
-xx<-PolyCol(factor(zz,labels=key.entries),colPalette)
-
+cxx<-PolyCol(factor(zz,labels=key.entries),colPalette)
+xx<-cxx$cols
 pp<-bubbleLegend(shape=shape,attribute=factor(zz,
                  labels=key.entries) ,colPalette=colPalette
                  ,legendName=divLegendImage,scale.level=scale.level,strokeColor=strokeColor)
@@ -246,8 +247,8 @@ endhtm<-paste(endhtm,'</div> \n </body>  \n  </html>')
 write(starthtm, filename,append=F)
 write(var, filename,append=TRUE)
 write(functions, filename,append=TRUE)
-write(endhtm, filename,append=TRUE)}
-
+write(endhtm, filename,append=TRUE)
+browseURL(filename)}
 
 x <- list(starthtm=starthtm,var=var, functions=functions,endhtm=endhtm)
 return(x)

@@ -4,23 +4,8 @@ function (attribute,colPalette=NULL,legendName="Legend",bgc='#B0C4DEFF',strokeCo
 if(strokeColor==""){strokeColor='black'}
 
 
-pal<-colorRampPalette(c( "green", "orange","brown"), space = "Lab")
-           if(is.factor(attribute)){
-                      if(length(colPalette)!=nlevels(attribute)) {
-                               xx<-colPalette<- as.character(substr(pal(nlevels(attribute)),1,7))    }
-                               }else{  if(is.null(colPalette)){colPalette<-pal(min(5,length(attribute) ) )}
-                               bre<-quantile(attribute, seq(1,length(colPalette))/length(colPalette))
-                                breakss<-factor(c(min(attribute),bre))
-                                break_unique<-as.numeric(levels(breakss))
-                                 attribute<-factor(cut(attribute, break_unique ,include.lowest = TRUE, dig.lab=6) )
-                                     if(length(colPalette)>=length(break_unique)){
-                                         colPalette<-colPalette[1:length(break_unique)] } else{
-                                                                     colPalette<- as.character(substr(colPalette[1:length(break_unique)-1],1,7))
-                                                                                               } 
-                           
-                                                                                                             }
                               
-		niv  <- levels(attribute) 
+niv  <- attribute
 		
 png(filename =paste(legendName,'.png',sep=""), width=250, height=length(niv)*25,units = "px", bg="white")
 par(mai=c(0,0,0,0),bg=bgc)

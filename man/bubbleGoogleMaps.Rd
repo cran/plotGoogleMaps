@@ -115,6 +115,7 @@ coordinates(meuse)<-~x+y
 proj4string(meuse) <- CRS('+init=epsg:28992')
 
 m<-bubbleGoogleMaps(meuse,zcol='zinc',filename='myMap.htm')
+
 m<-bubbleGoogleMaps(meuse,zcol='cadmium',filename='myMapCadmium.htm',layerName='Bubble plot - meuse',colPalette=terrain.colors(5),strokeColor='')
 # see results in your working directory
 }

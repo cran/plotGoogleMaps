@@ -1,0 +1,10 @@
+% \VignetteIndexEntry{plotGoogleMaps: An R Package for creating Google map mushup within R }
+% \VignetteKeywords{R, Google Maps API, sp, mup mushup}
+% \VignettePackage{plotGoogleMaps}
+
+\documentclass[a4paper]{article}
+\usepackage{hyperref}
+\usepackage{pdfpages}
+\begin{document}
+\includepdf[fitpaper=true,pages=-]{plotGoogleMaps.pdf}
+\end{document}

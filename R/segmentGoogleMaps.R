@@ -65,7 +65,8 @@ attribute=SP@data[,zcol]
 polyName<-paste('poly',nameOfSP,sep="")
 boxname<-paste(nameOfSP,'box',sep="")
 textname<- paste(nameOfSP,'text',sep="")
-divLegendImage<- paste(nameOfSP,'_Legend',sep="")
+divLegendImage<-tempfile("Legend")  
+divLegendImage<-substr(divLegendImage, start=regexpr("Legend",divLegendImage),stop=nchar(divLegendImage))
 legendboxname<-paste('box',divLegendImage,sep="")
 textnameW<-paste(textname,'W',sep="")
 
@@ -131,8 +132,9 @@ var1<-paste(var1, createSphereSegment(SP.ll[i,zcol],
                              clickable=clickable,
                              zIndex=zIndex),'\n',sep="")
                              
-                         
-      var1<-paste(var1,polyName,'.push(polygon); \n',sep="")
+                for(jj in 1:length(zcol)){         
+      var1<-paste(var1,polyName,'.push(polygon[',jj-1 ,']); \n',sep="")  }
+      
                          for(k in 1:length(names(SP.ll@data))){
                          attrib=paste(names(SP.ll@data)[k],':',SP.ll@data[i,k],'<br>')
                          att1=paste(att1,attrib)
@@ -144,57 +146,29 @@ var1<-paste(var1, createSphereSegment(SP.ll[i,zcol],
 var<-paste(var,var1)
 if (!is.list(previousMap)) {
 functions<-""
-# Creating functions for checkbox control, Show , Hide and Toggle control
+# Creating functions for checkbox comtrol, Show , Hide and Toggle control
 # Set of JavaScript functionalities
-functions<-paste(functions,'  function setOpacL(MLPArray,textname) {  \n
-         opacity=0.01*parseInt(document.getElementById(textname).value) \n
-         for (var i = 0; i < MLPArray.length; i++) { \n
-            if(MLPArray[i].length<0){    \n
-               MLPArray[i].setOptions({strokeOpacity: opacity}); \n
-            }else{ for(k=0;k<MLPArray[i].length;k++ ){  \n
-               MLPArray[i][k].setOptions({strokeOpacity: opacity});  } \n
-                }  }  } \n ',sep="")
-
-functions<-paste(functions,'function showO(MLPArray,boxname) {
-           for (var i = 0; i < MLPArray.length; i++) { \n
-               if(MLPArray[i].length<0){    \n
-               MLPArray[i].setMap(map);      \n
-            }else{ for(k=0;k<MLPArray[i].length;k++ ){   \n
-               MLPArray[i][k].setMap(map); } } }   \n
-          document.getElementById(boxname).checked = true; } \n ',sep="")
-
-functions<-paste(functions,'function hideO(MLPArray,boxname) {  \n
-           for (var i = 0; i < MLPArray.length; i++) { \n
-               if(MLPArray[i].length<0){      \n
-               MLPArray[i].setMap(null);    \n
-            }else{ for(k=0;k<MLPArray[i].length;k++ ){ \n
-               MLPArray[i][k].setMap(null); } } }  \n
-          document.getElementById(boxname).checked = true; } \n',sep="")
-          
+functions<-paste(functions,' function setOpacL(MLPArray,textname) {
+opacity=0.01*parseInt(document.getElementById(textname).value) \n
+for (var i = 0; i < MLPArray.length; i++) { MLPArray[i].setOptions
+({strokeOpacity: opacity}); } } \n',sep="")
+functions<-paste(functions,'function showO(MLPArray,boxname) { \n
+for (var i = 0; i < MLPArray.length; i++) { \n MLPArray[i].setMap(map); } \n
+ document.getElementById(boxname).checked = true; } \n ',sep="")
+functions<-paste(functions,'function hideO(MLPArray,boxname) { \n
+for (var i = 0; i < MLPArray.length; i++) { \n MLPArray[i].setMap(null);} \n
+ document.getElementById(boxname).checked = false; } \n ',sep="")
 functions<-paste(functions,'function boxclick(box,MLPArray,boxname)
-            { \n if (box.checked) { \n showO(MLPArray,boxname); \n }
-         else { \n hideO(MLPArray,boxname);} } \n',sep="")
- 
- 
-functions<-paste(functions,' function setOpac(MLPArray,textname)   {
-         opacity=0.01*parseInt(document.getElementById(textname).value)
-         for (var i = 0; i < MLPArray.length; i++) { \n
-            if(MLPArray[i].length<0){   \n
-               MLPArray[i].setOptions({strokeOpacity:
-      opacity, fillOpacity: opacity});  \n
-            }else{ for(k=0;k<MLPArray[i].length;k++ ){ \n
-               MLPArray[i][k].setOptions({strokeOpacity:
-      opacity, fillOpacity: opacity});  } }  }  } \n ',sep="")
-  
-functions<-paste(functions,' function setLineWeight(MLPArray,textnameW){ \n
-    weight=parseInt(document.getElementById(textnameW).value)  \n
-       for (var i = 0; i < MLPArray.length; i++) {  \n
-            if(MLPArray[i].length<0){   \n
-               MLPArray[i].setOptions({strokeWeight: weight});
-            }else{ for(k=0;k<MLPArray[i].length;k++ ){   \n
-            MLPArray[i][k].setOptions({strokeWeight: weight}); } } } } \n',sep="")
-  
-  
+{ \n if (box.checked) { \n showO(MLPArray,boxname); \n }
+ else { \n hideO(MLPArray,boxname);} } \n',sep="")
+functions<-paste(functions,' function setOpac(MLPArray,textname)
+ {opacity=0.01*parseInt(document.getElementById(textname).value) \n for
+  (var i = 0; i < MLPArray.length; i++) { MLPArray[i].setOptions({strokeOpacity:
+  opacity, fillOpacity: opacity}); } } \n',sep="")
+functions<-paste(functions,' function setLineWeight(MLPArray,textnameW)
+ {weight=parseInt(document.getElementById(textnameW).value) \n
+ for (var i = 0; i < MLPArray.length; i++)
+  { MLPArray[i].setOptions({strokeWeight: weight}); } } \n',sep="")
 functions<-paste(functions,'function legendDisplay(box,divLegendImage){ \n
 element = document.getElementById(divLegendImage).style; \n if (box.checked)
  { element.display="block";} else {  element.display="none";}} \n',sep="")
@@ -207,6 +181,7 @@ functions<-paste(functions,'function boxclickR(box,R,boxname) { \n if (box.check
 functions<-paste(functions,'function legendDisplay(box,divLegendImage){
 \n element = document.getElementById(divLegendImage).style; \n if (box.checked)
  { element.display="block";} else {  element.display="none";}} \n',sep="")
+ 
 init<-createInitialization(SP.ll,
                                add=T,
                                zoom=zoom,
@@ -228,9 +203,9 @@ functions<-paste( functions,init, sep="")  }else{ functions<- previousMap$functi
 infW<-""
 
 for(i in 1:length(SP.ll@coords[,1])){
-   for(k in 1: ncol(SP.ll@data)){
+   for(k in  ncol(SP.ll@data):1){
 infW<-paste(infW,createInfoWindowEvent(Line_or_Polygon=
-paste(polyName,'[',i-1,'][',k-1,'] ',sep=""),content=att[i]),' \n')}}
+paste(polyName,'[',3*i-k,'] ',sep=""),content=att[i]),' \n')}}
 
 functions<-paste(functions,infW,'showO(',polyName,',"',boxname,'");',sep="")
 
@@ -272,7 +247,8 @@ endhtm<-paste(endhtm,'</div> \n </body>  \n  </html>')
 write(starthtm, filename,append=F)
 write(var, filename,append=TRUE)
 write(functions, filename,append=TRUE)
-write(endhtm, filename,append=TRUE)}
+write(endhtm, filename,append=TRUE)
+browseURL(filename)}
 
 
 x <- list(starthtm=starthtm,var=var, functions=functions,endhtm=endhtm)

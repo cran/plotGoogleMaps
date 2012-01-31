@@ -1,7 +1,7 @@
 Package: plotGoogleMaps
 Type: Package
 Title: Plot SP data as HTML map mushup over Google Maps
-Version: 1.1
+Version: 1.2
 Date: 2012-01-31
 Author: Milan Kilibarda
 Maintainer: Milan Kilibarda <kili@grf.bg.ac.rs>
@@ -12,6 +12,6 @@ Description: This package provides a interactive plot device for
         Maps layers.
 Depends: R (>= 2.10.0), sp, rgdal, maptools,lattice
 License: GPL
-Packaged: 2012-02-06 12:54:48 UTC; gf01
+Packaged: 2012-03-05 15:20:54 UTC; gf01
 Repository: CRAN
-Date/Publication: 2012-02-06 13:38:08
+Date/Publication: 2012-03-05 16:44:05

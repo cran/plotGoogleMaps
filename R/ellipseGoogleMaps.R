@@ -160,7 +160,8 @@ starthtm<-paste(starthtm, fjs)
                   polyName<-paste('poly',nameOfSP,sep="")
                   boxname<-paste(nameOfSP,'box',sep="")
                   textname<- paste(nameOfSP,'text',sep="")
-                  divLegendImage<- paste(nameOfSP,'_Legend',sep="")
+                  divLegendImage<-tempfile("Legend")  
+                  divLegendImage<-substr(divLegendImage, start=regexpr("Legend",divLegendImage),stop=nchar(divLegendImage))
                   legendboxname<-paste('box',divLegendImage,sep="")
                   textnameW<-paste(textname,'W',sep="")
                   
@@ -183,10 +184,10 @@ starthtm<-paste(starthtm, fjs)
                   
                   var<-paste(var,'var ',polyName,'=[] ; \n')
                   var1=""
-                  xx<-PolyCol(attribute,colPalette)
-
+                  cxx<-PolyCol(attribute,colPalette)
+                   xx<-cxx$cols
                   
-                 pp<-polyLegend(attribute,colPalette=colPalette,legendName=divLegendImage,strokeColor=strokeColor)
+                 pp<-polyLegend(cxx$att,colPalette=cxx$col.uniq,legendName=divLegendImage,strokeColor=strokeColor)
                   
                   for(i in 1:length(SP.ll@polygons)){
                   var1<-paste(var1,createPolygon(SP.ll@polygons[[i]],
@@ -249,7 +250,8 @@ endhtm<-paste(endhtm,'</div> \n </body>  \n  </html>')
 write(starthtm, filename,append=F)
 write(var, filename,append=TRUE)
 write(functions, filename,append=TRUE)
-write(endhtm, filename,append=TRUE)}
+write(endhtm, filename,append=TRUE)
+browseURL(filename)}
 
 
 x <- list(starthtm=starthtm,var=var, functions=functions,endhtm=endhtm)
