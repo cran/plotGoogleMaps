@@ -1,20 +1,20 @@
-bubbleGoogleMaps <-
+segmentGoogleMaps <-
 function(SP,
+                     zcol=1:length(SP@data),
                      filename="",
-                     zcol=1,
                      max.radius=100,
-                     key.entries = quantile(SP@data[,zcol],(1:5)/5),
-                     do.sqrt = TRUE,
-                     add=FALSE,
+                     scalelist=TRUE,
+                     do.sqrt = FALSE,
+                     add=F,
                      previousMap=NULL,
-                     colPalette=NULL,
+                     colPalette=rainbow(ncol(SP@data[,zcol])),
                      strokeColor="#FFAA00",
                      strokeOpacity=1,
                      strokeWeight=1,
+                     fillOpacity=0.7,
                      geodesic=TRUE,
                      clickable=TRUE,
                      zIndex="null",
-                     shape="c",
                                map.width="80%",
                                map.height="100%",
                                layerName="",
@@ -41,43 +41,24 @@ function(SP,
 
 disableDefaultUI=FALSE
 
+nameOfSP<-sapply(as.list(substitute({SP})[-1]), deparse)
+nameOfSP<-gsub("\\s","", nameOfSP)
+nameOfSP<-gsub('[!,",#,$,%,&,(,),*,+,-,.,/,:,;,<,=,>,?,@,^,`,|,~]', "x", nameOfSP)
+nameOfSP<-gsub('[[]', "X", nameOfSP)
+nameOfSP<-gsub('[]]', "X", nameOfSP)
 
-
-	obj = as(SP, "SpatialPointsDataFrame")
-	data = obj@data
-	if (NCOL(data) == 1){
-		z = data
-	}else {
-    	z = data[, zcol]  }
-    	# avoid negative values
-    	if (min(key.entries)<0 ){
-    	ke<-abs(min(key.entries))+ key.entries+mean(key.entries)
-    	}else{ke<-key.entries+mean(key.entries)}     # no zeros for radius vecor
-    	# creating a vector for subgroups
-    	if(do.sqrt){
-    	scale.level<- sqrt(ke/(max(ke)) ) }else{scale.level<-ke/(max(ke))}
-	radius.level<-max.radius*scale.level
-	 # list of radiuses for createSphereCircle
-	 breakss<-factor(c(min(z),key.entries))
-   break_unique<-as.numeric(levels(breakss))
-   
-  if(length(unique(z))==length(key.entries)){ zz=factor(z,labels=radius.level)
-                                              radius.vector<-floor(as.numeric(as.vector(zz))) 
-                                            }else{ 
-                                                  zz=factor(cut(z,break_unique,include.lowest=TRUE ),labels=radius.level)
-	radius.vector<-floor(as.numeric(as.vector((zz))))
-                                                  }
+SP<-SP[,zcol]
+SP <-as(SP, "SpatialPointsDataFrame")
 SP.ll <- spTransform(SP, CRS("+proj=longlat +datum=WGS84"))
 
 Centar=c(mean(SP.ll@bbox[1,]),mean(SP.ll@bbox[2,]))
 sw<-c(SP.ll@bbox[2,1],SP.ll@bbox[1,1])
 ne<-c(SP.ll@bbox[2,2],SP.ll@bbox[1,2])
+
+
 ###################################################
 
-nameOfSP<-sapply(as.list(substitute({SP})[-1]), deparse)
-nameOfSP<-gsub('[!,",#,$,%,&,(,),*,+,-,.,/,:,;,<,=,>,?,@,^,`,|,~]', "_", nameOfSP)
-nameOfSP<-gsub('[[]', "_", nameOfSP)
-nameOfSP<-gsub('[]]', "_", nameOfSP)
+
 if(filename==""){
 filename <- paste(nameOfSP,'.htm',sep="")}
 attribute=SP@data[,zcol]
@@ -87,8 +68,6 @@ textname<- paste(nameOfSP,'text',sep="")
 divLegendImage<- paste(nameOfSP,'_Legend',sep="")
 legendboxname<-paste('box',divLegendImage,sep="")
 textnameW<-paste(textname,'W',sep="")
-if(layerName==""){
-layerName=nameOfSP}
 
 if(strokeColor!=""){
 rgbc<-col2rgb(strokeColor)
@@ -98,11 +77,23 @@ if(!is.null(colPalette)){
 rgbc<-col2rgb(colPalette)
 colPalette<-apply(rgbc,2,function(x) rgb(x[1],x[2],x[3],maxColorValue=255))}
 
+if(layerName==""){
+layerName=nameOfSP}
 
-for(i in 1:length(SP.ll@data)) {
-if( identical(attribute,SP.ll@data[,i])){
- attributeName<-names(SP.ll@data)[i]  }
-}
+    if(scalelist){
+    xdata<-SP@data[,zcol]
+    xdata <- apply(xdata, 2L, function(x) (x - min(x, na.rm = TRUE))/diff(range(x, na.rm = TRUE)))
+    xsum <- apply(xdata, 1L,function(x) ( sum(x)))
+    scalelist<-xsum/max(xsum)
+    scalelist<-sqrt(scalelist)} else{ scalelist<-rep(1,length(SP.ll@coords[,1])) }
+
+
+
+attributeName<-paste(names(SP.ll@data[,zcol]),collapse ="",sep=" ")
+
+if(layerName==""){
+layerName=paste(nameOfSP,attributeName)}
+
 
 att<-rep(NA,length(SP.ll@coords[,1]))
 att1=""
@@ -116,59 +107,94 @@ var<-c(' \n var map \n')
 
 var<-paste(var,'var ',polyName,'=[] ; \n')
 var1=""
-xx<-PolyCol(factor(zz,labels=key.entries),colPalette)
 
-pp<-bubbleLegend(shape=shape,attribute=factor(zz,
-                 labels=key.entries) ,colPalette=colPalette
-                 ,legendName=divLegendImage,scale.level=scale.level,strokeColor=strokeColor)
+pp<-segmentLegend(attribute=names(SP.ll@data[,zcol]),
+                        colPalette=colPalette,
+                        legendName=divLegendImage,
+                        border=ifelse(strokeColor=="",NA,strokeColor),
+                        bgc='#B0C4DEFF')
 
 for(i in 1:length(SP.ll@coords[,1])){
-var1<-paste(var1,createSphereShape(shape=shape,center=c(SP.ll@coords[i,1],
-                         SP.ll@coords[i,2]),
-                         radius=radius.vector[i],
-                         fillColor=xx[i],
-                         strokeColor=strokeColor,
-                         strokeOpacity=strokeOpacity,
-                         strokeWeight=strokeWeight,
-                         geodesic=geodesic,
-                         clickable=clickable,
-                         zIndex=zIndex),'\n',sep="")
-var1<-paste(var1,polyName,'.push(polygon); \n',sep="")
-                   for(k in 1:length(names(SP.ll@data))){
-                   attrib=paste(names(SP.ll@data)[k],':',SP.ll@data[i,k],'<br>')
-                   att1=paste(att1,attrib)
-                    }
-                  att[i]=att1
-                  att1=""
-}
-
+var1<-paste(var1, createSphereSegment(SP.ll[i,zcol],
+                              max.radius=max.radius,  #m
+                             name="polygon",
+                             key.entries = as.numeric(SP.ll@data[i,zcol]),
+                             scalelist= scalelist[i],
+                             do.sqrt = do.sqrt,
+                             fillColor=colPalette,
+                             fillOpacity=fillOpacity,
+                             map="map",
+                             strokeColor=strokeColor,
+                             strokeOpacity= strokeOpacity,
+                             strokeWeight=strokeWeight,
+                             geodesic=geodesic,
+                             clickable=clickable,
+                             zIndex=zIndex),'\n',sep="")
+                             
+                         
+      var1<-paste(var1,polyName,'.push(polygon); \n',sep="")
+                         for(k in 1:length(names(SP.ll@data))){
+                         attrib=paste(names(SP.ll@data)[k],':',SP.ll@data[i,k],'<br>')
+                         att1=paste(att1,attrib)
+                          }
+          att[i]=att1
+          att1=""
+                                       }
 # Put all variables together
 var<-paste(var,var1)
 if (!is.list(previousMap)) {
 functions<-""
 # Creating functions for checkbox control, Show , Hide and Toggle control
 # Set of JavaScript functionalities
-functions<-paste(functions,' function setOpacL(MLPArray,textname) {
-opacity=0.01*parseInt(document.getElementById(textname).value) \n
-for (var i = 0; i < MLPArray.length; i++) { MLPArray[i].setOptions
-({strokeOpacity: opacity}); } } \n',sep="")
-functions<-paste(functions,'function showO(MLPArray,boxname) { \n
-for (var i = 0; i < MLPArray.length; i++) { \n MLPArray[i].setMap(map); } \n
- document.getElementById(boxname).checked = true; } \n ',sep="")
-functions<-paste(functions,'function hideO(MLPArray,boxname) { \n
-for (var i = 0; i < MLPArray.length; i++) { \n MLPArray[i].setMap(null);} \n
- document.getElementById(boxname).checked = false; } \n ',sep="")
+functions<-paste(functions,'  function setOpacL(MLPArray,textname) {  \n
+         opacity=0.01*parseInt(document.getElementById(textname).value) \n
+         for (var i = 0; i < MLPArray.length; i++) { \n
+            if(MLPArray[i].length<0){    \n
+               MLPArray[i].setOptions({strokeOpacity: opacity}); \n
+            }else{ for(k=0;k<MLPArray[i].length;k++ ){  \n
+               MLPArray[i][k].setOptions({strokeOpacity: opacity});  } \n
+                }  }  } \n ',sep="")
+
+functions<-paste(functions,'function showO(MLPArray,boxname) {
+           for (var i = 0; i < MLPArray.length; i++) { \n
+               if(MLPArray[i].length<0){    \n
+               MLPArray[i].setMap(map);      \n
+            }else{ for(k=0;k<MLPArray[i].length;k++ ){   \n
+               MLPArray[i][k].setMap(map); } } }   \n
+          document.getElementById(boxname).checked = true; } \n ',sep="")
+
+functions<-paste(functions,'function hideO(MLPArray,boxname) {  \n
+           for (var i = 0; i < MLPArray.length; i++) { \n
+               if(MLPArray[i].length<0){      \n
+               MLPArray[i].setMap(null);    \n
+            }else{ for(k=0;k<MLPArray[i].length;k++ ){ \n
+               MLPArray[i][k].setMap(null); } } }  \n
+          document.getElementById(boxname).checked = true; } \n',sep="")
+          
 functions<-paste(functions,'function boxclick(box,MLPArray,boxname)
-{ \n if (box.checked) { \n showO(MLPArray,boxname); \n }
- else { \n hideO(MLPArray,boxname);} } \n',sep="")
-functions<-paste(functions,' function setOpac(MLPArray,textname)
- {opacity=0.01*parseInt(document.getElementById(textname).value) \n for
-  (var i = 0; i < MLPArray.length; i++) { MLPArray[i].setOptions({strokeOpacity:
-  opacity, fillOpacity: opacity}); } } \n',sep="")
-functions<-paste(functions,' function setLineWeight(MLPArray,textnameW)
- {weight=parseInt(document.getElementById(textnameW).value) \n
- for (var i = 0; i < MLPArray.length; i++)
-  { MLPArray[i].setOptions({strokeWeight: weight}); } } \n',sep="")
+            { \n if (box.checked) { \n showO(MLPArray,boxname); \n }
+         else { \n hideO(MLPArray,boxname);} } \n',sep="")
+ 
+ 
+functions<-paste(functions,' function setOpac(MLPArray,textname)   {
+         opacity=0.01*parseInt(document.getElementById(textname).value)
+         for (var i = 0; i < MLPArray.length; i++) { \n
+            if(MLPArray[i].length<0){   \n
+               MLPArray[i].setOptions({strokeOpacity:
+      opacity, fillOpacity: opacity});  \n
+            }else{ for(k=0;k<MLPArray[i].length;k++ ){ \n
+               MLPArray[i][k].setOptions({strokeOpacity:
+      opacity, fillOpacity: opacity});  } }  }  } \n ',sep="")
+  
+functions<-paste(functions,' function setLineWeight(MLPArray,textnameW){ \n
+    weight=parseInt(document.getElementById(textnameW).value)  \n
+       for (var i = 0; i < MLPArray.length; i++) {  \n
+            if(MLPArray[i].length<0){   \n
+               MLPArray[i].setOptions({strokeWeight: weight});
+            }else{ for(k=0;k<MLPArray[i].length;k++ ){   \n
+            MLPArray[i][k].setOptions({strokeWeight: weight}); } } } } \n',sep="")
+  
+  
 functions<-paste(functions,'function legendDisplay(box,divLegendImage){ \n
 element = document.getElementById(divLegendImage).style; \n if (box.checked)
  { element.display="block";} else {  element.display="none";}} \n',sep="")
@@ -202,7 +228,9 @@ functions<-paste( functions,init, sep="")  }else{ functions<- previousMap$functi
 infW<-""
 
 for(i in 1:length(SP.ll@coords[,1])){
-infW<-paste(infW,createInfoWindowEvent(Line_or_Polygon=paste(polyName,'[',i-1,'] ',sep=""),content=att[i]),' \n')}
+   for(k in 1: ncol(SP.ll@data)){
+infW<-paste(infW,createInfoWindowEvent(Line_or_Polygon=
+paste(polyName,'[',i-1,'][',k-1,'] ',sep=""),content=att[i]),' \n')}}
 
 functions<-paste(functions,infW,'showO(',polyName,',"',boxname,'");',sep="")
 
@@ -233,13 +261,11 @@ endhtm<- paste(endhtm,'<tr> \n  <td> \n <input type="text" id="',
 endhtm<- paste(endhtm,'<tr> \n  <td> \n <input type="text" id="',textnameW,
                '" value="1" onChange=\'setLineWeight(',polyName,',"',textnameW,
                '")\' size=3 /> Line weight (pixels) </td> </tr> \n ',sep="")
-endhtm<- paste(endhtm,' \n <tr> \n  <td> <input type="checkbox"  checked="checked"  id="',
-                                 legendboxname,'" onClick=\'legendDisplay(this,"',
-                                 divLegendImage,'");\' /> LEGEND ', layerName ,' ',
-                                 attributeName,'<div style="display:block;" id="',
-                                 divLegendImage,'"> <img src="',divLegendImage,
-                                 '.png" alt="Legend"></div> </td> </tr>
-                                  \n </table> \n <hr> \n',sep="")
+endhtm<- paste(endhtm,' \n <tr> \n  <td> <input type="checkbox" checked="checked" id="',legendboxname, 
+               '" onClick=\'legendDisplay(this,"',divLegendImage,'");\' /> LEGEND ',  
+               layerName ,'<div style="display:block;" id="',
+               divLegendImage,'"> <img src="',divLegendImage,
+               '.png" alt="Legend"></div> </td> </tr> \n </table> \n <hr> \n',sep="")
 
 if (add==F){functions<- paste(functions,'}')
 endhtm<-paste(endhtm,'</div> \n </body>  \n  </html>')

@@ -11,6 +11,7 @@ function(SP,
                             geodesic=TRUE,
                             clickable=TRUE,
                             draggableMarker=FALSE,
+                            iconMarker="",
                             flat=TRUE,
                             visible=TRUE,
                             zIndex="null",
@@ -33,448 +34,36 @@ function(SP,
                                scrollwheel =TRUE     ,
                                streetViewControl= FALSE ){
  
- #################################################################################
-#################################################################################
 
-createPolygon<-function(oneSPpolygonsSlot,
-                         name="polygon",
-                         fillColor="#00AAFF",
-                         fillOpacity=0.5,
-                         map="map",
-                         strokeColor="#FFAA00",
-                         strokeOpacity=1,
-                         strokeWeight=1,
-                         geodesic=TRUE,
-                         clickable=TRUE,
-                         zIndex="null") {
-
-              if (clickable!=FALSE)
-                  {clickable='true'}else{ clickable='false' }
-
-              if (geodesic!=FALSE)
-                 {geodesic='true' }else{  geodesic='false'}
-
-listOfPolygonsPerPolygon<-sapply(slot(oneSPpolygonsSlot, "Polygons"),
- function(x) slot(x, "coords"))
-plotOrder<-slot(oneSPpolygonsSlot, "plotOrder")
-pts<-rep("",length(plotOrder))
-
-   if (length(plotOrder)>1) {
-
-              for(j in 1:(length(plotOrder)-1)){
-              lonlat<-listOfPolygonsPerPolygon[[plotOrder[j]]]
-              pts[j]=paste('new google.maps.LatLng(',
-                           lonlat[1:((length(lonlat)/2-1)),2],',',
-                           lonlat[1:((length(lonlat)/2-1)),1],'),\n',collapse="")
-              pts[j]=paste(pts[j],'new google.maps.LatLng(',
-                           lonlat[length(lonlat)/2,2],',',lonlat[length(lonlat)/2,1],')')
-              pts[j]=paste('[',pts[j],'], \n')
-              }
-       lonlat<-listOfPolygonsPerPolygon[[plotOrder[j+1]]]
-       pts[j+1]=paste('new google.maps.LatLng(',
-                       lonlat[1:((length(lonlat)/2-1)),2],',',
-                       lonlat[1:((length(lonlat)/2-1)),1],'),\n',collapse="")
-       pts[j+1]=paste(pts[j+1],'new google.maps.LatLng(',
-                     lonlat[length(lonlat)/2,2],',',lonlat[length(lonlat)/2,1],')')
-       pts[j+1]=paste('[',pts[j+1],'] \n')
-       xxx=paste(pts[1:(j+1)],collapse="")
-       paths=paste('[',xxx,']')
-         }else{
-
-       lonlat<-slot(slot(oneSPpolygonsSlot, "Polygons")[[1]],"coords")
-       paths=paste('new google.maps.LatLng(',
-                   lonlat[1:((length(lonlat)/2-1)),2],',',
-                   lonlat[1:((length(lonlat)/2-1)),1],'),\n',collapse="")
-       paths=paste('[',paths,'new google.maps.LatLng(',
-                   lonlat[length(lonlat)/2,2],',',lonlat[length(lonlat)/2,1],')]')
-
-  }
-
-
-
-
-
-
-x<-paste('var ',name,'= new google.maps.Polygon({ \n path:',paths,', \n','map:',
-         map,', \n clickable:',clickable,',\n fillColor: "',fillColor,
-         '",\n strokeColor: "',strokeColor,'", \n strokeOpacity:',
-         strokeOpacity,',\n fillOpacity:',fillOpacity,',\n strokeWeight:',
-         strokeWeight,',\n geodesic:',geodesic,',\n zIndex:',zIndex,'});',sep="")
-
-return(x)
-
-}
-##########################################################################
-
-createLine<-function(lonlatmatrix,
-                     name="line",
-                     map="map",
-                     strokeColor="#FFAA00",
-                     strokeOpacity=1,
-                     strokeWeight=1,
-                     geodesic=TRUE,
-                     clickable=TRUE,
-                     zIndex="null") {
-
-              if (clickable!=FALSE)
-                  {clickable='true'}
-              else {
-                  clickable='false'
-             }
-
-              if (geodesic!=FALSE)
-                { geodesic='true'}
-              else{
-                 geodesic='false'
-              }
-
-pts=paste('new google.maps.LatLng(',lonlatmatrix[1:((length(lonlatmatrix)/2-1)),2],
-          ',',lonlatmatrix[1:((length(lonlatmatrix)/2-1)),1],'),\n',collapse="")
-pts=paste('[',pts,'new google.maps.LatLng(',lonlatmatrix[length(lonlatmatrix)/2,2],
-          ',',lonlatmatrix[length(lonlatmatrix)/2,1],')]')
-
-x<-paste('var ',name,'= new google.maps.Polyline({ \n path:',pts,', \n','map:',
-          map,', \n clickable:',clickable,',\n strokeColor: "',strokeColor,
-          '", \n strokeOpacity:',strokeOpacity,',\n strokeWeight:',strokeWeight,
-          ',\n geodesic:',geodesic,',\n zIndex:',zIndex,'});')
-return(x)
-
-}
-###############################################################################
-createMarker<-function(lonlat,
-                       name="marker",
-                       title="Point" ,
-                       map="map",
-                       clickable=TRUE,
-                       draggable=FALSE,
-                       flat=TRUE,
-                       visible=TRUE,
-                       zIndex="null",...) {
-# ...  shape="" , icon="",shadow="",cursor=""
-
-              if (clickable!=FALSE)
-                 { clickable='true' }
-              else { clickable='false'}
-
-              if (draggable!=FALSE)
-                 {draggable='true'}
-              else  {draggable='false'}
-
-              if (flat!=FALSE)
-                 flat='true'
-              else { flat='false'}
-
-              if (visible!=FALSE)
-                  visible='true'
-              else {visible='false'}
-
-
-
-x<-paste('var ',name,'= new google.maps.Marker({ \n
-         position: new google.maps.LatLng(',lonlat[2],',',lonlat[1],'),
-         \n','map:',map,',\n','title:',title,',\n clickable:',clickable,',
-         \n draggable:',draggable,', \n flat:',flat,',\n visible:',visible,',','
-         \n zIndex:',zIndex)
-
-argsList <- list(...)
-vectorNames<-names(argsList)
-
- if (length(argsList)>1){
-
-     for(i in 1:(length(argsList)-1)) {
-     x<-paste(x,', \n',vectorNames[i],':"',argsList[[i]],'"',sep="")
-     }
-     x<-paste(x,', \n',vectorNames[i+1],':"',argsList[[i+1]],'"}); ',sep="")
-  } else { if( length(argsList)==1 ){
-          x<-paste(x,', \n',vectorNames[1],':"',argsList[[1]],'"',sep="")}
-
-   x<-paste(x,'}); ') }
-   return(x)
-
-}
-################################################################################
-
-createInitialization<-function(SP,
-                               name="map",
-                               zoom=15,
-                               mapTypeId = "HYBRID",
-                               fitBounds=TRUE,
-                               add=FALSE,
-                               divname="map_canvas",
-                               disableDefaultUI=FALSE,
-                               disableDoubleClickZoom =FALSE,
-                               draggable= TRUE ,
-                               keyboardShortcuts=TRUE,
-                               mapTypeControlOptions='DEFAULT',
-                               navigationControl=TRUE,
-                               navigationControlOptions='DEFAULT',
-                               noClear=FALSE,
-                               scaleControl=TRUE,
-                               scaleControlOptions= 'STANDARD',
-                               scrollwheel =TRUE     ,
-                               streetViewControl= FALSE) {
-
-
-                                if (scaleControl!=FALSE)
-                                   {scaleControl='true'}else{ scaleControl='false' }
-
-                               if (disableDefaultUI!=FALSE)
-                                   {disableDefaultUI='true'}else{ disableDefaultUI='false' }
-
-                               if (disableDoubleClickZoom!=FALSE)
-                                   {disableDoubleClickZoom='true'}else{ disableDoubleClickZoom='false' }
-
-                               if (draggable!=FALSE)
-                                   {draggable='true'}else{ draggable='false' }
-
-                               if (keyboardShortcuts!=FALSE)
-                                   {keyboardShortcuts='true'}else{ keyboardShortcuts='false' }
-
-                               if (navigationControl!=FALSE)
-                                   {navigationControl='true'}else{ navigationControl='false' }
-
-                               if (noClear!=FALSE)
-                                   {noClear='true'}else{ noClear='false' }
-
-                               if (scaleControl!=FALSE)
-                                   {scaleControl='true'}else{ scaleControl='false'
-                                    scaleControlOptions='null'}
-
-                               if (scrollwheel!=FALSE)
-                                   {scrollwheel='true'}else{ scrollwheel='false' }
-
-                               if (streetViewControl!=FALSE)
-                                   {streetViewControl='true'}else{ streetViewControl='false' }
-
-
-mapTypeId<-paste('google.maps.MapTypeId.',mapTypeId,sep="")
-mapTypeControlOptions<-paste('{style: google.maps.MapTypeControlStyle.',
-                                      mapTypeControlOptions,'}',sep="")
-navigationControlOptions<-paste('{style: google.maps.NavigationControlStyle.',
-                                navigationControlOptions ,'}',sep="")
-if(!is.null(scaleControlOptions)){
-scaleControlOptions<-paste('{style: google.maps.ScaleControlStyle.',
-scaleControlOptions ,'}',sep="")  }
-
-SP.ll <- spTransform(SP, CRS("+proj=longlat +datum=WGS84"))
-Centar=c(mean(SP.ll@bbox[1,]),mean(SP.ll@bbox[2,]))
-sw<-c(SP.ll@bbox[2,1],SP.ll@bbox[1,1])
-ne<-c(SP.ll@bbox[2,2],SP.ll@bbox[1,2])
-
-
-
-x<-'function initialize() { \n'
-
-x<-paste(x,'var latlng = new google.maps.LatLng(',Centar[2],',',Centar[1],') ; \n')
-x<-paste(x,'\n var myOptions = { zoom:',zoom,', \n center: latlng',', \n mapTypeId:',mapTypeId,
-' ,\n disableDefaultUI:',disableDefaultUI,' ,\n disableDoubleClickZoom:',disableDoubleClickZoom,
-' ,\n  draggable:',draggable,' ,\n  keyboardShortcuts: ', keyboardShortcuts,
-' ,\n mapTypeControlOptions:', mapTypeControlOptions,  ' ,\n  navigationControl:',navigationControl,
-' ,\n navigationControlOptions:',navigationControlOptions,' ,\n noClear:',noClear,
- ' ,\n scaleControl:', scaleControl ,' ,\n scaleControlOptions:',scaleControlOptions,
-' ,\n  scrollwheel:', scrollwheel, ' ,\n streetViewControl:',streetViewControl,'} ; \n')
-
-
-
-x<-paste(x,'\n',name)
-x<-paste(x,'= new google.maps.Map(document.getElementById("',divname,'"),myOptions); \n',sep="")
-
-if( fitBounds==TRUE){
-x<-paste(x,' ',name,'.fitBounds(new google.maps.LatLngBounds(
- new google.maps.LatLng(',sw[1],',',sw[2],'),
- new google.maps.LatLng( ',ne[1],',',ne[2],'))); ',sep="")  }
-
-if (add==FALSE){x<- paste(x,'}')}
-
-return(x)
-
-
-}
-################################################################################
-createInfoWindowEvent<-function(Line_or_Polygon,
-                                map="map",
-                                event="click",
-                                content="The content",
-                                position="event.latLng",
-                                disableAutoPan=FALSE,
-                                maxWidth="null",
-                                pixelOffset="null",
-                                zIndex="null") {
-
-             if (disableAutoPan!=FALSE)
-                  {disableAutoPan='true'}else{ disableAutoPan='false' }
-
-
-          if (is.numeric(position)) {
-          position=paste('position=new google.maps.LatLng(',position[2],',',position[1],')')
-          }
-           if (is.numeric(position)) {
-          pixelOffset=paste('new google.maps.Size',pixelOffset[1],',',pixelOffset[1],')')
-          }
-x=paste( ' var infowindow = new google.maps.InfoWindow({ content: "" }); \n google.maps.event.addListener(',Line_or_Polygon,
-',"',event,'",function(event){ \n infowindow.content="',
-content,'"; \n  infowindow.position =',position,
-'; \n infowindow.disableAutoPan=', disableAutoPan,
-'; \n infowindow.maxWidth=',maxWidth,
-';\n infowindow.pixelOffset=',
-pixelOffset,';\n infowindow.zIndex='
-,zIndex,'; infowindow.open(',map,')}); ',sep="")
-
-return(x)
-
-}
-################################################################################
-createInfoWindowEventM<-function(Marker,
-                                map="map",
-                                event="click",
-                                content="The content",
-                                position="event.latLng",
-                                disableAutoPan=FALSE,
-                                maxWidth="null",
-                                pixelOffset="null",
-                                zIndex="null") {
-
-             if (disableAutoPan!=FALSE)
-                  {disableAutoPan='true'}else{ disableAutoPan='false' }
-
-
-          if (is.numeric(position)) {
-          position=paste('position=new google.maps.LatLng(',position[2],',',position[1],')')
-          }
-           if (is.numeric(position)) {
-          pixelOffset=paste('new google.maps.Size',pixelOffset[1],',',pixelOffset[1],')')
-          }
-x=paste( ' var infowindow = new google.maps.InfoWindow({ content: "" }); \n google.maps.event.addListener(',Marker,
-',"',event,'",function(event){ \n infowindow.content="',
-content,'"; \n  infowindow.position =',position,
-'; \n infowindow.disableAutoPan=', disableAutoPan,
-'; \n infowindow.maxWidth=',maxWidth,
-';\n infowindow.pixelOffset=',
-pixelOffset,';\n infowindow.zIndex='
-,zIndex,'; infowindow.open(',map,',' ,Marker,')}); ',sep="")
-
-return(x)
-
-}
-################################################################################
-PolyCol<-function(attribute,colPalette=NULL) {
-      # attribute=soil.ll@data$ID
-if (length(colPalette)>1){
-   if(!is.numeric(attribute) && !is.character(attribute) ) {
-
-              if(nlevels(attribute)== length(colPalette)){
-                x<-factor(attribute,labels=colPalette)
-                return(as.character(substr(x,1,7)))
-                }else{
-                stop("length of colPallete should match number of factor levels")
-                }
-   }else{
-
-    if( is.numeric(attribute)){
-     x<-factor(cut(attribute,length(colPalette) ),labels=colPalette)
-     return(as.character(substr(x,1,7)))
-     }
-   }
-
- if(nlevels(factor(attribute))== length(colPalette)){
- x<-factor(factor(attribute),labels=colPalette)
-         return(as.character(substr(x,1,7)))
-         }else{
-          stop("length of colPallete should match number of factor levels")
-         }
-}else{
-     if(!is.null(colPalette)){
-      x<-rep(colPalette,length(attribute))
-       return(substr(x,1,7))}else{
-        x<-factor(factor(attribute),labels=rainbow(nlevels(factor(attribute))))
-         return(as.character(substr(x,1,7)))
-       }
-}
-
-}
-#################################################################################
-polyLegend<-function (attribute,colPalette=NULL,legendName="Legend",bgc='#B0C4DEFF') {
-png(file=paste(legendName,'.png',sep=""), width=250, height=nlevels(factor(attribute))*25,units = "px", bg="white")
-par(mai=c(0,0,0,0),bg=bgc)
-plot(0,xlab="",ylab="",type="n", axes=FALSE,xlim=c(0,3),ylim=c(0,nlevels(factor(attribute))))
-
-
-		niv  <- levels(factor(attribute))
-	if(is.null(colPalette)){
-	  cols<-rainbow(length(niv))
-    }else{cols <-colPalette}
-
-	k=1
-	for(i in nlevels(factor(attribute)):1) {
-	polygon(c(1  ,1   ,0  ,0, 1),
-		        c(i-1  ,i    , i , i-1 , i-1),
-			col=cols[k])
-	 text(2,i-.5,niv[k],cex=1)
-    k=k+1}
-     graph1 <- dev.cur()
-     dev.off(graph1)
-    }
-
-#################################################################################
-lineLegend<-function (attribute,colPalette,legendName="Legend",bgc='#B0C4DEFF') {
-png(file=paste(legendName,'.png',sep=""), width=250, height=nlevels(factor(attribute))*25,units = "px", bg="white")
-par(mai=c(0,0,0,0),bg=bgc)
-plot(0,xlab="",ylab="",type="n", axes=FALSE,xlim=c(0,3),ylim=c(0,nlevels(factor(attribute))))
-
-	niv  <- levels(factor(attribute))
-if(is.null(colPalette)){
-	  cols<-rainbow(length(niv))
-    }else{cols <-colPalette}
-	k=1
-	for(i in nlevels(factor(attribute)):1) {
-	segments( 0 ,i-.5    , 1 , i-.5 ,
-			col=cols[k], lwd=3)
-	 text(1.4,i-.5,niv[k],cex=1)
-    k=k+1}
-    graph1 <- dev.cur()
-     dev.off(graph1)
-    }
-
-################################################################################
-rasterLegend<-function (attribute,colPalette,legendName="Legend",bgc='#B0C4DEFF') {
-png(file=paste(legendName,'.png',sep=""), width=250, height=nlevels(factor(attribute))*25,units = "px", bg="white")
-par(mai=c(0,0,0,0),bg=bgc)
-plot(0,xlab="",ylab="",type="n", axes=FALSE,xlim=c(0,3),ylim=c(0,nlevels(factor(attribute))))
-	niv  <- levels(factor(attribute))
-	  if(is.null(colPalette)){
-	  cols<-rainbow(length(niv))
-    }else{cols <-colPalette}
-	k=1
-	for(i in nlevels(factor(attribute)):1) {
-	polygon(c(1  ,1   ,0  ,0, 1),
-		        c(i-1  ,i    , i , i-1 , i-1),
-			col=cols[k], border=NA)
-	 text(2,i-.5,niv[k],cex=1)
-    k=k+1}
-     graph1 <- dev.cur()
-     dev.off(graph1)
-    }
+    
+ ################################ plotGoogleMaps ###############################
  ###############################################################################
  ###############################################################################
  
- SP.ll <- spTransform(SP, CRS("+proj=longlat +datum=WGS84"))
+SP.ll <- spTransform(SP, CRS("+proj=longlat +datum=WGS84"))
 disableDefaultUI=FALSE
 Centar=c(mean(SP.ll@bbox[1,]),mean(SP.ll@bbox[2,]))
 sw<-c(SP.ll@bbox[2,1],SP.ll@bbox[1,1])
 ne<-c(SP.ll@bbox[2,2],SP.ll@bbox[1,2])
 attribute=SP@data[,zcol]
 nameOfSP<-sapply(as.list(substitute({SP})[-1]), deparse)
-nameOfSP<-gsub('[!,",#,$,%,&,(,),*,+,-,.,/,:,;,<,=,>,?,@,^,`,|,~]', "_", nameOfSP)
-nameOfSP<-gsub('[[]', "_", nameOfSP)
-nameOfSP<-gsub('[]]', "_", nameOfSP)
+nameOfSP<-gsub("\\s","", nameOfSP)
+nameOfSP<-gsub('[!,",#,$,%,&,(,),*,+,-,.,/,:,;,<,=,>,?,@,^,`,|,~]', "x", nameOfSP)
+nameOfSP<-gsub('[[]', "X", nameOfSP)
+nameOfSP<-gsub('[]]', "X", nameOfSP)
 if(filename==""){
 filename <- paste(nameOfSP,'.htm',sep="")}
 
 if(layerName==""){
 layerName=nameOfSP}
 
-rgb<-col2rgb(strokeColor)
-strokeColor<-rgb(rgb[1],rgb[2],rgb[3],maxColorValue=255)
+if(strokeColor!=""){
+rgbc<-col2rgb(strokeColor)
+strokeColor<-rgb(rgbc[1],rgbc[2],rgbc[3],maxColorValue=255) }
+
+if(!is.null(colPalette)){
+rgbc<-col2rgb(colPalette)
+colPalette<-apply(rgbc,2,function(x) rgb(x[1],x[2],x[3],maxColorValue=255))}
 
 if (!is.list(previousMap)) {
 functions<-""
@@ -515,7 +104,7 @@ functions<-paste(functions,'function legendDisplay(box,divLegendImage){
  { element.display="block";} else {  element.display="none";}} \n',sep="")
  
 init<-createInitialization(SP.ll,
-                               add=TRUE,
+                               add=T,
                                zoom=zoom,
                                fitBounds=fitBounds,
                                mapTypeId = mapTypeId,
@@ -533,6 +122,18 @@ init<-createInitialization(SP.ll,
 # Put all functions together
 functions<-paste( functions,init, sep="")  }else{ functions<- previousMap$functions}
 
+fjs=""
+
+fjs<-paste(fjs,'\n USGSOverlay.prototype = new google.maps.OverlayView(); \n',sep="")
+fjs<-paste(fjs,'function USGSOverlay(bounds, image, map) {\n      this.bounds_ = bounds;\n      this.image_ = image;\n      this.map_ = map;\n      this.div_ = null;\n      this.setMap(map); }\n',sep="")
+fjs<-paste(fjs, 'USGSOverlay.prototype.onAdd = function() {\n      var div = document.createElement("DIV");\n      div.style.border = "none";\n      div.style.borderWidth = "0px";\n      div.style.position = "absolute";\n      var img = document.createElement("img");\n      img.src = this.image_;\n      img.style.width = "100%";\n      img.style.height = "100%";\n      div.appendChild(img);\n      this.div_ = div;\n      this.div_.style.opacity = 0.5;\n      var panes = this.getPanes();\n      panes.overlayImage.appendChild(this.div_);}\n' ,sep="")
+fjs<-paste(fjs,'USGSOverlay.prototype.draw = function() {\n        var overlayProjection = this.getProjection();\n        var sw = overlayProjection.fromLatLngToDivPixel(this.bounds_.getSouthWest());\n        var ne = overlayProjection.fromLatLngToDivPixel(this.bounds_.getNorthEast());\n        var div = this.div_;\n        div.style.left = sw.x + "px";\n        div.style.top = ne.y + "px";\n        div.style.width = (ne.x - sw.x) + "px";\n        div.style.height = (sw.y - ne.y) + "px";} \n' ,sep="")
+fjs<-paste(fjs,'USGSOverlay.prototype.onRemove = function() { \n this.div_.parentNode.removeChild(this.div_);} \n' ,sep="")
+fjs<-paste(fjs,'USGSOverlay.prototype.hide = function() { if (this.div_) { this.div_.style.visibility = "hidden";} } \n' ,sep="")
+fjs<-paste(fjs,'USGSOverlay.prototype.show = function() {if (this.div_) {  this.div_.style.visibility = "visible";}} \n' ,sep="")
+fjs<-paste(fjs,'       USGSOverlay.prototype.toggle = function() { \n if (this.div_) { \n  if (this.div_.style.visibility == "hidden") {  \n   this.show(); \n  } else { \n  this.hide(); } } } \n' ,sep="")
+fjs<-paste(fjs,' USGSOverlay.prototype.toggleDOM = function() {\n          if (this.getMap()) {\n            this.setMap(null);\n          } else {\n            this.setMap(this.map_);}}\n' ,sep="")
+fjs<-paste(fjs,' function setOpacR(Raster,textname) { \n  opac=0.01*parseInt(document.getElementById(textname).value) \n    Raster.div_.style.opacity= opac } \n' ,sep="")
 
 starthtm=paste('<html> \n <head> \n <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
 \n <style type="text/css">  \n html { height: 100% } \n body { height: 100%; margin: 0px; padding: 0px }
@@ -545,7 +146,8 @@ starthtm=paste('<html> \n <head> \n <meta name="viewport" content="initial-scale
  overflow:auto;
  background-color:#b0c4de } \n </style> \n
  <script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"> </script>  \n
- <script language="javascript"> ')
+ <script language="javascript"> \n ')
+starthtm<-paste(starthtm, fjs)
 
 ################################################################################
 
@@ -566,12 +168,13 @@ if (class(SP)[1]=="SpatialPoints"){
             var1=""
             for(i in 1:length(SP.ll@coords[,1])){
             var1<-paste(var1,createMarker(SP.ll@coords[i,],
-                                         title=paste('"',nameOfSP,
-                                                ' NO: ',as.character(i),'"',sep=""),
+                                         title=paste(nameOfSP,
+                                                ' NO: ',as.character(i),sep=""),
                                                clickable=clickable,
                                                draggable=draggableMarker,
                                                flat=flat,
                                                visible=visible,
+                                               icon=iconMarker,
                                                zIndex=zIndex),'\n',sep="")   
             var1<-paste(var1,pointsName,'.push(marker); \n',sep="")  }
             
@@ -605,11 +208,12 @@ else if   (class(SP)[1]=="SpatialPointsDataFrame") {
               var<-paste(var,'var ',pointsName,'=[] ;')
               var1=""
               for(i in 1:length(SP.ll@coords[,1])){
-              var1<-paste(var1,createMarker(SP.ll@coords[i,],title=paste('"',nameOfSP,' NO: ',as.character(i),'"',sep=""),
+              var1<-paste(var1,createMarker(SP.ll@coords[i,],title=paste(nameOfSP,' NO: ',as.character(i),sep=""),
                                                  clickable=clickable,
                                                  draggable=draggableMarker,
                                                  flat=flat,
                                                  visible=visible,
+                                                  icon=iconMarker,
                                                  zIndex=zIndex
                                                   ),'\n',sep="")
               var1<-paste(var1,pointsName,'.push(marker); \n',sep="")
@@ -707,14 +311,15 @@ else if   (class(SP)[1]=="SpatialLinesDataFrame")     {
             var<-paste(var,'var ',lineName,'=[] ; \n')
             var1=""
             xx<-PolyCol(attribute,colPalette)
-            pp<-lineLegend(attribute,colPalette=xx,legendName=divLegendImage)
+            swxx<-weightATR(attribute,strokeWeight)
+            pp<-lineLegend(attribute,colPalette=xx,linew=strokeWeight,legendName=divLegendImage)
             for(i in 1:length(SP.ll@lines)){
             lls<-(slot(SP.ll,"lines"))[[i]]
             lonlat<-slot(slot(lls,"Lines")[[1]],"coords")
             var1<-paste(var1,createLine(lonlat,
                                         strokeColor=xx[i]  ,
                                         strokeOpacity=strokeOpacity,
-                                        strokeWeight=strokeWeight,
+                                        strokeWeight=swxx[i],
                                         geodesic=geodesic,
                                         clickable=clickable,
                                         zIndex=zIndex ),'\n',sep="")
@@ -757,10 +362,10 @@ else if   (class(SP)[1]=="SpatialLinesDataFrame")     {
                            textnameW,'" value="1" onChange=\'setLineWeight(',
                            lineName,',"',textnameW,'")\' size=3 /> 
                            Line weight (pixels) </td> </tr> </table> \n',sep="")
-            endhtm<- paste(endhtm,' \n <tr> \n  <td> <input type="checkbox" id="'
+            endhtm<- paste(endhtm,' \n <tr> \n  <td> <input type="checkbox"  checked="checked" id="'
                            ,legendboxname,'" onClick=\'legendDisplay(this,"',
                            divLegendImage,'");\' /> LEGEND ', layerName ,' ',
-                           attributeName,'<div style="display:none;" id="',
+                           attributeName,'<div style="display:block;" id="',
                            divLegendImage,'"> <img src="',divLegendImage,
                            '.png" alt="Legend"></div> 
                            </td> </tr> \n </table> \n <hr> \n',sep="")
@@ -816,7 +421,7 @@ else if   (class(SP)[1]=="SpatialPolygons")             {
                              textname,'" value="50" onChange=\'setOpac(',
                              polyName,',"',textname,'")\' size=3 /> 
                              Opacity (0-100 %) </td> </tr> \n',sep="")
-              endhtm<- paste(endhtm,'<tr> \n  <td> \n <input type="text" id="',
+              endhtm<- paste(endhtm,'<tr> \n  <td> \n <input type="text"  checked="checked"  id="',
                              textnameW,'" value="1" onChange=\'setLineWeight(',
                               polyName,',"',textnameW,'")\' size=3 /> Line weight
                                (pixels) </td> </tr> \n </table> \n',sep="")
@@ -852,7 +457,9 @@ else if   (class(SP)[1]=="SpatialPolygonsDataFrame")      {
                   var<-paste(var,'var ',polyName,'=[] ; \n')
                   var1=""
                   xx<-PolyCol(attribute,colPalette)
-                  pp<-polyLegend(attribute,colPalette=colPalette,legendName=divLegendImage)
+
+                  
+                 pp<-polyLegend(attribute,colPalette=colPalette,legendName=divLegendImage,strokeColor=strokeColor)
                   
                   for(i in 1:length(SP.ll@polygons)){
                   var1<-paste(var1,createPolygon(SP.ll@polygons[[i]],
@@ -902,10 +509,10 @@ else if   (class(SP)[1]=="SpatialPolygonsDataFrame")      {
                                  id="',textnameW,'" value="1" onChange=\'
                                  setLineWeight(',polyName,',"',textnameW,'")\' 
                                  size=3 /> Line weight (pixels) </td> </tr> \n ',sep="")
-                  endhtm<- paste(endhtm,' \n <tr> \n  <td> <input type="checkbox" id="',
+                  endhtm<- paste(endhtm,' \n <tr> \n  <td> <input type="checkbox"  checked="checked"  id="',
                                  legendboxname,'" onClick=\'legendDisplay(this,"',
                                  divLegendImage,'");\' /> LEGEND ', layerName ,' ',
-                                 attributeName,'<div style="display:none;" id="',
+                                 attributeName,'<div style="display:block;" id="',
                                  divLegendImage,'"> <img src="',divLegendImage,
                                  '.png" alt="Legend"></div> </td> </tr>
                                   \n </table> \n <hr> \n',sep="")
@@ -915,6 +522,7 @@ else if (class(SP)[1]=="SpatialPixelsDataFrame" || class(SP)[1]=="SpatialGridDat
                 boxname<-paste(nameOfSP,'box',sep="")
                 divLegendImage<- paste(nameOfSP,'_Legend',sep="")
                 legendboxname<-paste('box',divLegendImage,sep="")
+                 textname<- paste(nameOfSP,'text',sep="")
                 
                 for(i in 1:length(SP.ll@data)) {
                 if( identical(attribute,SP.ll@data[,i])){
@@ -930,21 +538,41 @@ else if (class(SP)[1]=="SpatialPixelsDataFrame" || class(SP)[1]=="SpatialGridDat
                 var<-paste(var,'\n var ',rasterName,'imageBounds = new google.maps.LatLngBounds
                 (new google.maps.LatLng(',sw[1],',',sw[2],'),
                 new google.maps.LatLng(',ne[1],',',ne[2],')); \n',sep="")
-                var<-paste(var,'var ', rasterName ,'= new google.maps.GroundOverlay("',rasterName,
-                '.png",',rasterName,'imageBounds); \n',sep="")
+                var<-paste(var,'var ', rasterName ,'= new USGSOverlay(',rasterName,'imageBounds',',"',rasterName,  '.png", map); \n',sep="")
                 
+                 if(is.null(colPalette)){
+                pal<-colorRampPalette(c( "green", "orange","brown"), space = "Lab")
+                xx<-colPalette<-as.character(substr(pal(12),1,7)) } else { xx<-colPalette<-as.character(substr(colPalette,1,7)) }
                 
-                xx<-as.character(substr(colPalette,1,7))
                          if(is.factor(attribute)){
+                         
+                              if(length(colPalette)!=nlevels(attribute)) {
+                               xx<-colPalette<- as.character(substr(pal(nlevels(attribute)),1,7))    }
+                              
                               pp<-rasterLegend(attribute,
                               colPalette=xx,legendName=divLegendImage)
                               SP$arg1111<-as.numeric(SP[attributeName]@data[,1])
                               }else{
-                              pp<-rasterLegend(attribute=levels(cut(attribute,length(colPalette))),
-                              colPalette=xx,legendName=divLegendImage)
-                              SP$arg1111<-SP[zcol]@data[,1]}
+                                   bre<-quantile(attribute, seq(1,length(colPalette))/length(colPalette))
+                                    breakss<-factor(c(min(attribute),bre))
+                                    break_unique<-as.numeric(levels(breakss))
+                                    
+                                    if(length(colPalette)>length(break_unique)){
+                                         colPalette<-colPalette[1:length(break_unique)] } 
+                                    
+                                                if(sum(as.numeric(levels(factor(attribute))))-sum(break_unique) ==0 ){
+                                                       xxx<-factor(attribute)
+                                                       } else{
+                                               xxx<-factor(cut(attribute, break_unique ,include.lowest = TRUE, dig.lab=6) )
+                                                       }
+                                  pp<-rasterLegend(attribute= xxx   ,
+                                  colPalette=xx,legendName=divLegendImage)
+                                  SP$arg1111<-SP[zcol]@data[,1]
+                                     }
+                              
+                              
                 SGqk <- GE_SpatialGrid(SP.ll)
-                png(file=paste(rasterName,'.png',sep=""), width=2*SGqk$width, height=2*SGqk$height, bg="transparent")
+                png(filename =paste(rasterName,'.png',sep=""), width=2*SGqk$width, height=2*SGqk$height, bg="transparent")
                 par(mar=c(0,0,0,0), xaxs="i", yaxs="i")
                 image(as.image.SpatialGridDataFrame(SP["arg1111"]), col=colPalette)
                 
@@ -962,9 +590,14 @@ else if (class(SP)[1]=="SpatialPixelsDataFrame" || class(SP)[1]=="SpatialGridDat
                 endhtm<- paste(endhtm,'<table border="0"> \n <tr> \n  <td> <input type="checkbox" id="',
                                   boxname,'" onClick=\'boxclickR(this,',rasterName,',"',boxname,
                                   '");\' /> <b> ', layerName ,'<b> </td> </tr> \n',sep="")
-                endhtm<- paste(endhtm,' \n <tr> \n  <td> <input type="checkbox" id="',
+                                  
+                  endhtm<- paste(endhtm,'  \n <tr> \n  <td> <input type="text" id="',
+                                  textname,'" value="50" onChange=\'setOpacR(',
+                                  rasterName,',"',textname,'")\' size=3 />  Opacity (0-100 %)</td> </tr> \n',sep="")
+                  
+                endhtm<- paste(endhtm,' \n <tr> \n  <td> <input type="checkbox" checked="checked" id="',
                       legendboxname,'" onClick=\'legendDisplay(this,"',divLegendImage,'");\' /> LEGEND ',
-                      layerName  ,' ',attributeName,'<div style="display:none;" id="',divLegendImage,
+                      layerName  ,' ',attributeName,'<div style="display:block;" id="',divLegendImage,
                        '"> <img src="',divLegendImage,'.png" alt="Legend"></div> </td> </tr> \n </table> \n <hr> \n',sep="")
                                                                               }
 else  {
@@ -972,9 +605,9 @@ else  {
     
 
 
-if (add==FALSE){functions<- paste(functions,'}')
+if (add==F){functions<- paste(functions,'}')
 endhtm<-paste(endhtm,'</div> \n </body>  \n  </html>')
-write(starthtm, filename,append=FALSE)
+write(starthtm, filename,append=F)
 write(var, filename,append=TRUE)
 write(functions, filename,append=TRUE)
 write(endhtm, filename,append=TRUE)}
@@ -985,4 +618,3 @@ return(x)
 
 
               }
-

@@ -1,69 +1,64 @@
-\name{bubbleGoogleMaps}
-\alias{bubbleGoogleMaps}
-\title{Create a bubble plot of spatial data on Google Maps}
-\description{Plot htm output with Google Maps API in form of bubble plot of spatial
-             data, with options for bicolour residual plots. Ready to use as local htm file or into your own website.}
-\usage{bubbleGoogleMaps(SP, 
-                        filename = '',
-                        zcol = 1, 
-                        max.radius = 100, 
-                        key.entries = quantile(SP@data[, zcol], (1:5)/5), 
-                        do.sqrt = TRUE, 
-                        add = FALSE, 
-                        previousMap = NULL, 
-                        colPalette = NULL, 
-                        strokeColor = '#FFAA00',
-                        strokeOpacity = 1, 
-                        strokeWeight = 1, 
-                        geodesic = TRUE, 
-                        clickable = TRUE, 
-                        zIndex = 'null', 
-                        shape = 'c', 
-                        map.width = '80\%',
-                        map.height = '100\%', 
-                        layerName = '', 
-                        control.width = '20\%', 
-                        control.height = '100\%', 
-                        zoom = 15, 
-                        fitBounds = TRUE, 
-                        mapTypeId = 'HYBRID', 
-                        disableDoubleClickZoom = FALSE, 
-                        draggable = TRUE, 
-                        keyboardShortcuts = TRUE, 
-                        mapTypeControlOptions = 'DEFAULT', 
-                        navigationControl = TRUE, 
-                        navigationControlOptions = 'DEFAULT', 
-                        scaleControlOptions = 'STANDARD', 
-                        noClear = FALSE, 
-                        scrollwheel = TRUE,
-                        streetViewControl = FALSE)}
-\arguments{\item{SP}{object of \link[sp]{SpatialPointsDataFrame-class} with
-          associated coordinate reference systems}
+\name{ellipseGoogleMaps}
+\alias{ellipseGoogleMaps}
+\title{Create a ellipses plot from spatial points data frame on Google Maps, 
+       by using three attributes: semi-major axis,  semi-minor axis, and orientation in degrees.}
+\description{Plot htm output with Google Maps API in form of ellipses plot of spatial
+             data. Ready to use as local htm file or into your own website.}
+\usage{
+ellipseGoogleMaps(SP, 
+                  filename = '', 
+                  zcol = 1:3, 
+                  add = F, 
+                  previousMap = NULL, 
+                  scale_e = 10, 
+                  colPalette = NULL, 
+                  strokeColor = '#FFAA00', 
+                  strokeOpacity = 1, 
+                  strokeWeight = 1, 
+                  geodesic = TRUE, 
+                  clickable = TRUE,  
+                  zIndex = 'null', 
+                   map.width = '80\%',
+                   map.height = '100\%', 
+                   layerName = '', 
+                   control.width = '20\%', 
+                   control.height = '100\%',
+                  zoom = 15, 
+                  fitBounds = TRUE, 
+                  mapTypeId = 'HYBRID', 
+                  disableDoubleClickZoom = FALSE, 
+                  draggable = TRUE, 
+                  keyboardShortcuts = TRUE, 
+                  mapTypeControlOptions = 'DEFAULT', 
+                  navigationControl = TRUE, 
+                  navigationControlOptions = 'DEFAULT', 
+                  scaleControlOptions = 'STANDARD', 
+                  noClear = FALSE, 
+                  scrollwheel = TRUE, 
+                  streetViewControl = FALSE)
+}
+\arguments{
+  \item{SP}{object of \link[sp]{SpatialPointsDataFrame-class} with
+          associated coordinate reference systems and minimum three attributes: semi-major axis,  semi-minor axis, and orientation in degrees. }
   \item{filename}{the name of the output htm or html file. If filename is not defined
          the function will create filename same as the name of SP object with htm extension.}
-  \item{zcol}{variable column name, or column number after removing spatial coordinates 
-             from x@data: 1 refers to the first non-coordinate column}
-  \item{max.radius}{value for largest circle (the plotting symbols) in metre, circumcircle of triange or quadrangle (square)}
-  \item{key.entries}{the values that will be plotted in the key; by default the five 
-                    quantiles min, q.25, median q.75, max}
-  \item{do.sqrt}{logical; if TRUE the plotting symbol area (sqrt(diameter)) is 
-                 proportional to the value of the z-variable; if FALSE, 
-                 the symbol size (diameter) is proportional to the z-variable}
+  \item{zcol}{variable column names, or column numbers after removing spatial coordinates 
+             from x@data: 1 refers to the first non-coordinate column. Attribute names or numbers of
+             columns contains semi-major axis,  semi-minor axis, and orientation in degrees respectively}
   \item{add}{logical; if TRUE the result of the function will be a list stored as variable 
              in the R. It is possible to combine more layers in the one plot, previously saved
              output from plotGoogleMaps should be given in the previousMap attribute.}
   \item{previousMap}{previously saved variable from plotGoogleMaps when attribute add is TRUE.
                      It is solution for combining more than one layers in the one plot.}
-  \item{colPalette}{colours to be used to fill plotting symbols; numeric vector of same size
+  \item{scale_e}{if is 10 then ellipses is drown 10:1}
+ \item{colPalette}{colours to be used to fill plotting symbols; numeric vector of same size
                      like key.entries}
-  \item{strokeColor}{the color to draw the border of circle (the plotting symbols)}
+  \item{strokeColor}{the color to draw the border of circle (the plotting symbols), NULL for no border}
   \item{strokeOpacity}{the stroke opacity between 0.0 and 1.0}
-  \item{strokeWeight}{the stroke width in pixels}
+   \item{strokeWeight}{the stroke width in pixels}
   \item{geodesic}{render each edge as a geodesic (a segment of a 'great circle')}
   \item{clickable}{indicates whether this plotting symbol handles click events}
   \item{zIndex}{the zIndex compared to other polygons}
-  \item{shape}{the shape for plotting symbol; 'c' for circle; 't' for triangle; 
-               'q' for square}
   \item{map.width}{the width of the map. Can be in percent or in pixels (px)}
   \item{map.height}{the height of the map. Can be in percent or in pixels (px)}
   \item{layerName}{the name of the layer. Layer name appears on the check box for
@@ -105,16 +100,15 @@
 
 \seealso{
 \link{plotGoogleMaps},
-\link{ellipseGoogleMaps},
-\link{segmentGoogleMaps}
+\link{segmentGoogleMaps},
+\link{bubbleGoogleMaps}
 }
 \examples{
 # Data preparation
-data(meuse)
-coordinates(meuse)<-~x+y
-proj4string(meuse) <- CRS('+init=epsg:28992')
-
-m<-bubbleGoogleMaps(meuse,zcol='zinc',filename='myMap.htm')
-m<-bubbleGoogleMaps(meuse,zcol='cadmium',filename='myMapCadmium.htm',layerName='Bubble plot - meuse',colPalette=terrain.colors(5),strokeColor='')
+    ell<- data.frame(E=c(7456263,7456489,7456305),N=c(4954146,4952978,4952695),A=c( 2.96,4.55,7.10),B=c(2.35,2.11,2.29),teta=c(28.35242,41.04491,38.47216))
+    coordinates(ell) <- ~E+N
+    proj4string(ell) <- CRS("+proj=tmerc +lat_0=0 +lon_0=21 +k=0.9999 +x_0=7500000 +y_0=0 +ellps=bessel +towgs84=574.027,170.175,401.545,4.88786,-0.66524,-13.24673,0.99999311067 +units=m")
+    
+    m<-ellipseGoogleMaps(ell,filename="Ellipse.htm",mapTypeId='ROADMAP')
 # see results in your working directory
 }

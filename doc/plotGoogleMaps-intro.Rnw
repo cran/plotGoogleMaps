@@ -1,0 +1,4 @@
+%\VignetteIndexEntry{plotGoogleMaps-intro}
+\documentclass{article}
+\begin{document}
+\end{document}
