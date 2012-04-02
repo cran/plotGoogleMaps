@@ -103,7 +103,7 @@ if(!do.bubble){
      for(i in 1: dim(SPT)[2]){
             m=plotGoogleMaps(SP=SPT[,i],filename=paste(filename[i],'.htm',sep=''),
                              zcol=zcol,
-                             layerName = paste(attributeName,i,sep=""),
+                             layerName = paste(attributeName,index(SPT@time[i]),sep=" "),
                    colPalette=cols[(1:length(SPT[,i]@data[,1])) +lti],openMap=openMap, ...) 
                            lti=lti+length(SPT[,i]@data[,1]) }
 }else{
@@ -115,7 +115,7 @@ if(!do.bubble){
     m=plotGoogleMaps(SP=tmp,
                      filename=paste(filename[i],'.htm',sep=''),
                      zcol=zcol,
-                     layerName = paste(attributeName,i,sep=""),
+                     layerName = paste(attributeName,index(SPT@time[i]),sep=""),
                      colPalette=colsb[(1:length(SPT[,i]@data[,1])) +lti] ,
                      openMap=openMap, ...)  
                     lti=lti+length(SPT[,i]@data[,1]) }
@@ -155,7 +155,7 @@ ifr=sapply(1:length(filename), function(i){
 })
 
 ifr=paste(ifr,collapse="")
-ifr=paste('<html> <head>  </head> <body>',ifr,' </body>  </html>',sep="",collapse=" ")
+ifr=paste(' <html> <head>  </head> <body>',ifr,' </body>  </html>',sep="",collapse=" ")
 
 setwd(wd)
 write(ifr, stfilename)
