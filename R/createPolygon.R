@@ -17,8 +17,7 @@ function(oneSPpolygonsSlot,
               if (geodesic!=FALSE)
                  {geodesic='true' }else{  geodesic='false'}
 
-listOfPolygonsPerPolygon<-sapply(slot(oneSPpolygonsSlot, "Polygons"),
- function(x) slot(x, "coords"))
+listOfPolygonsPerPolygon<-lapply(slot(oneSPpolygonsSlot, "Polygons"),function(x) slot(x, "coords"))
 holes<-sapply(slot(oneSPpolygonsSlot, "Polygons"), function(x) slot(x, "ringDir")) 
 plotOrder<-slot(oneSPpolygonsSlot, "plotOrder")
 pts<-rep("",length(plotOrder))

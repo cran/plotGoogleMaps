@@ -2,11 +2,13 @@ plotGoogleMaps <-
 function(SP,
                             filename="",
                             zcol=1,
+                            at=NULL,
                             add=FALSE,
                             previousMap=NULL,
                             colPalette=NULL,
                             strokeColor="#FFAA00",
                             strokeOpacity=1,
+                            fillOpacity=0.7,
                             strokeWeight=1,
                             geodesic=TRUE,
                             clickable=TRUE,
@@ -15,10 +17,10 @@ function(SP,
                             flat=TRUE,
                             visible=TRUE,
                             zIndex="null",
-                               map.width="80%",
+                               map.width="100%",
                                map.height="100%",
                                layerName="",
-                               control.width="20%",
+                               control.width="100%",
                                control.height="100%",
                                zoom=15,
                                fitBounds=TRUE,
@@ -32,7 +34,9 @@ function(SP,
                                scaleControlOptions= 'STANDARD',
                                noClear=FALSE,
                                scrollwheel =TRUE     ,
-                               streetViewControl= FALSE ){
+                               streetViewControl= FALSE,
+                               openMap= TRUE
+                               ){
  
 
     
@@ -40,12 +44,22 @@ function(SP,
  ###############################################################################
  ###############################################################################
  
+#  wd=getwd()
+ 
+
 SP.ll <- spTransform(SP, CRS("+proj=longlat +datum=WGS84"))
+
 disableDefaultUI=FALSE
 Centar=c(mean(SP.ll@bbox[1,]),mean(SP.ll@bbox[2,]))
 sw<-c(SP.ll@bbox[2,1],SP.ll@bbox[1,1])
 ne<-c(SP.ll@bbox[2,2],SP.ll@bbox[1,2])
-attribute=SP@data[,zcol]
+ if(any('data'==slotNames(SP)) ){
+   attribute=SP@data[,zcol] 
+   for(i in 1:length(SP.ll@data)) {
+     if( identical(attribute,SP.ll@data[,i])){
+       attributeName<-names(SP.ll@data)[i]  }
+                                 }
+ }
 nameOfSP<-sapply(as.list(substitute({SP})[-1]), deparse)
 nameOfSP<-gsub("\\s","", nameOfSP)
 nameOfSP<-gsub('[!,",#,$,%,&,(,),*,+,-,.,/,:,;,<,=,>,?,@,^,`,|,~]', "x", nameOfSP)
@@ -53,9 +67,21 @@ nameOfSP<-gsub('[[]', "X", nameOfSP)
 nameOfSP<-gsub('[]]', "X", nameOfSP)
 if(filename==""){
 filename <- paste(nameOfSP,'.htm',sep="")}
+ 
+ if(class(SP.ll)[1]=="SpatialPointsDataFrame"){
+   
+           if(length(iconMarker)<length(SP.ll@coords[,1]) )  {
+                 iconMarker=iconlabels(attribute,colPalette,at,height=10,icon=TRUE,scale=0.6) }else{
+                                     iconMarker=iconMarker[1:length(SP.ll@coords[,1])] }
+      # warning("iconMarker length is exceeded number of points")
+                                             }
 
 if(layerName==""){
 layerName=nameOfSP}
+ 
+
+ 
+ legenda=T
 
 if(strokeColor!=""){
 rgbc<-col2rgb(strokeColor)
@@ -102,6 +128,7 @@ functions<-paste(functions,'function boxclickR(box,R,boxname) { \n if (box.check
 functions<-paste(functions,'function legendDisplay(box,divLegendImage){
 \n element = document.getElementById(divLegendImage).style; \n if (box.checked)
  { element.display="block";} else {  element.display="none";}} \n',sep="")
+
  
 init<-createInitialization(SP.ll,
                                add=T,
@@ -126,7 +153,7 @@ fjs=""
 
 fjs<-paste(fjs,'\n USGSOverlay.prototype = new google.maps.OverlayView(); \n',sep="")
 fjs<-paste(fjs,'function USGSOverlay(bounds, image, map) {\n      this.bounds_ = bounds;\n      this.image_ = image;\n      this.map_ = map;\n      this.div_ = null;\n      this.setMap(map); }\n',sep="")
-fjs<-paste(fjs, 'USGSOverlay.prototype.onAdd = function() {\n      var div = document.createElement("DIV");\n      div.style.border = "none";\n      div.style.borderWidth = "0px";\n      div.style.position = "absolute";\n      var img = document.createElement("img");\n      img.src = this.image_;\n      img.style.width = "100%";\n      img.style.height = "100%";\n      div.appendChild(img);\n      this.div_ = div;\n      this.div_.style.opacity = 0.5;\n      var panes = this.getPanes();\n      panes.overlayImage.appendChild(this.div_);}\n' ,sep="")
+fjs<-paste(fjs, 'USGSOverlay.prototype.onAdd = function() {\n      var div = document.createElement("DIV");\n      div.style.border = "none";\n      div.style.borderWidth = "0px";\n      div.style.position = "absolute";\n      var img = document.createElement("img");\n      img.src = this.image_;\n      img.style.width = "100%";\n      img.style.height = "100%";\n      div.appendChild(img);\n      this.div_ = div;\n      this.div_.style.opacity = ',fillOpacity,';\n      var panes = this.getPanes();\n      panes.overlayImage.appendChild(this.div_);}\n' ,sep="")
 fjs<-paste(fjs,'USGSOverlay.prototype.draw = function() {\n        var overlayProjection = this.getProjection();\n        var sw = overlayProjection.fromLatLngToDivPixel(this.bounds_.getSouthWest());\n        var ne = overlayProjection.fromLatLngToDivPixel(this.bounds_.getNorthEast());\n        var div = this.div_;\n        div.style.left = sw.x + "px";\n        div.style.top = ne.y + "px";\n        div.style.width = (ne.x - sw.x) + "px";\n        div.style.height = (sw.y - ne.y) + "px";} \n' ,sep="")
 fjs<-paste(fjs,'USGSOverlay.prototype.onRemove = function() { \n this.div_.parentNode.removeChild(this.div_);} \n' ,sep="")
 fjs<-paste(fjs,'USGSOverlay.prototype.hide = function() { if (this.div_) { this.div_.style.visibility = "hidden";} } \n' ,sep="")
@@ -135,16 +162,29 @@ fjs<-paste(fjs,'       USGSOverlay.prototype.toggle = function() { \n if (this.d
 fjs<-paste(fjs,' USGSOverlay.prototype.toggleDOM = function() {\n          if (this.getMap()) {\n            this.setMap(null);\n          } else {\n            this.setMap(this.map_);}}\n' ,sep="")
 fjs<-paste(fjs,' function setOpacR(Raster,textname) { \n  opac=0.01*parseInt(document.getElementById(textname).value) \n    Raster.div_.style.opacity= opac } \n' ,sep="")
 
+if(map.width!=control.width){
+  css= paste('\n #map_canvas { float: left;
+ width:', map.width,';
+ height:' , map.height,'; }
+\n #cBoxes {float: left;
+width:', control.width,';
+height: ', control.height,';
+overflow:auto} \n') 
+}else{
+  css=' #map_canvas {min-height: 100%;
+height:auto; }
+ 
+ #cBoxes {position:absolute;
+right:5px;
+top:50px;
+background:white}'
+}
+
+ 
 starthtm=paste('<html> \n <head> \n <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
 \n <style type="text/css">  \n html { height: 100% } \n body { height: 100%; margin: 0px; padding: 0px }
- \n #map_canvas { float: left;
-  width:', map.width,';
-  height:' , map.height,'; }
- \n #cBoxes {float: left;
-  width:', control.width,';
-  height: ', control.height,';
- overflow:auto;
- background-color:#b0c4de } \n </style> \n
+',css,'
+</style> \n
  <script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"> </script>  \n
  <script language="javascript"> \n ')
 starthtm<-paste(starthtm, fjs)
@@ -164,19 +204,22 @@ if (class(SP)[1]=="SpatialPoints"){
             var<-c(' var marker \n var map \n')
             # Create all markers and store them in markersArray - PointsName
             }else{ var<-previousMap$var}
+            
             var<-paste(var,'var ',pointsName,'=[] ;')
             var1=""
-            for(i in 1:length(SP.ll@coords[,1])){
-            var1<-paste(var1,createMarker(SP.ll@coords[i,],
-                                         title=paste(nameOfSP,
-                                                ' NO: ',as.character(i),sep=""),
-                                               clickable=clickable,
-                                               draggable=draggableMarker,
-                                               flat=flat,
-                                               visible=visible,
-                                               icon=iconMarker,
-                                               zIndex=zIndex),'\n',sep="")   
-            var1<-paste(var1,pointsName,'.push(marker); \n',sep="")  }
+
+            
+            var1<- paste( sapply(as.list(1:length(SP.ll@coords[,1])), function(i) paste(var1,createMarker(SP.ll@coords[i,],
+                                                                                                          title=paste(nameOfSP,
+                                                                                                                      ' NO: ',as.character(i),sep=""),
+                                                                                                          clickable=clickable,
+                                                                                                          draggable=draggableMarker,
+                                                                                                          flat=flat,
+                                                                                                          visible=visible,
+                                                                                                          icon=iconMarker[i],
+                                                                                                          zIndex=zIndex),'\n',sep="") 
+                                   )
+                          ,pointsName,'.push(marker); \n',sep="",collapse='\n')
             
             # Put all variables together
             var<-paste(var,var1)
@@ -185,11 +228,13 @@ if (class(SP)[1]=="SpatialPoints"){
             functions<-paste(functions,'showO(',pointsName,',"',boxname,'");',sep="")
             
             if (!is.list(previousMap)) {
-            endhtm<-c('</script> \n </head> \n <body onload="initialize()"> \n <div id="map_canvas"></div>  \n <div id="cBoxes"> \n')
+             endhtm<-c('</script> \n </head> \n <body onload="initialize()"> \n 
+                            <div id="map_canvas"></div>  \n
+                           \n <div id="cBoxes"> \n')
             } else { endhtm<- previousMap$endhtm }
             
             endhtm<- paste(endhtm,'<input type="checkbox" id="',boxname,
-            '" onClick=\'boxclick(this,',pointsName,',"',boxname,'");\' /> <b>', layerName ,'<b> <hr />',sep="")
+            '" onClick=\'boxclick(this,',pointsName,',"',boxname,'");\' /> <b>', layerName ,'<b> <hr/>',sep="")
                                                           }
 else if   (class(SP)[1]=="SpatialPointsDataFrame") {
               pointsName<-paste('markers',nameOfSP,sep="")
@@ -207,37 +252,63 @@ else if   (class(SP)[1]=="SpatialPointsDataFrame") {
               }else{ var<-previousMap$var}
               var<-paste(var,'var ',pointsName,'=[] ;')
               var1=""
-              for(i in 1:length(SP.ll@coords[,1])){
-              var1<-paste(var1,createMarker(SP.ll@coords[i,],title=paste(nameOfSP,' NO: ',as.character(i),sep=""),
-                                                 clickable=clickable,
-                                                 draggable=draggableMarker,
-                                                 flat=flat,
-                                                 visible=visible,
-                                                  icon=iconMarker,
-                                                 zIndex=zIndex
-                                                  ),'\n',sep="")
-              var1<-paste(var1,pointsName,'.push(marker); \n',sep="")
+              k = 1:length(names(SP.ll@data))
               
-                                for(k in 1:length(names(SP.ll@data))){
-                                attrib=paste(names(SP.ll@data)[k],':',SP.ll@data[i,k],'<br>')
-                                att1=paste(att1,attrib)
-                                 }
-                                att[i]=att1
-                                att1=""
-              }
+              att<- paste ( lapply(as.list(1:length(SP.ll@coords[,1])), function(i) paste(names(SP.ll@data)[k],':',sapply(k ,function(k) as.character(SP.ll@data[i,k])) ,'\\r',
+                                                                                                                          collapse="")  )   )
+              
+              var1<- paste( sapply(as.list(1:length(SP.ll@coords[,1])), function(i) paste(var1,createMarker(SP.ll@coords[i,],
+                                                                                                            title=paste(att[i],sep=""),
+                                                                                                            clickable=clickable,
+                                                                                                            draggable=draggableMarker,
+                                                                                                            flat=flat,
+                                                                                                            visible=visible,
+                                                                                                            icon=iconMarker[i],
+                                                                                                            zIndex=zIndex),'\n',sep="") 
+                                    )
+                            ,pointsName,'.push(marker); \n',sep="",collapse='\n')
+              
+           
+              
+              att<- paste ( lapply(as.list(1:length(SP.ll@coords[,1])), function(i) paste(names(SP.ll@data)[k],':',sapply(k ,function(k) as.character(SP.ll@data[i,k]))
+                                                                                          ,'<br>', collapse="")  )   )
+                                
               
               var<-paste(var,var1)
               infW<-""
-              for(i in 1:length(SP.ll@coords[,1])){
-              infW<-paste(infW,createInfoWindowEventM(Marker=paste(pointsName,'[',i-1,'] ',sep=""),content=att[i]))}
+              
+              infW<- paste ( lapply(as.list(1:length(SP.ll@coords[,1])), function(i) 
+                paste(infW,createInfoWindowEventM(Marker=paste(pointsName,'[',i-1,'] ',sep=""),content=att[i]),' \n')  )  ,collapse='\n' )                  
+              
+
               
               functions<-paste(functions,infW,'showO(',pointsName,',"',boxname,'");',sep="")
               
               if (!is.list(previousMap)) {
-              endhtm<-c('</script> \n </head> \n <body onload="initialize()"> \n <div id="map_canvas"></div>  \n <div id="cBoxes"> \n')
-              } else { endhtm<- previousMap$endhtm }
+                endhtm<-c('</script> \n </head> \n <body onload="initialize()"> \n 
+                            <div id="map_canvas"></div>  \n
+                           \n <div id="cBoxes"> \n')              
+                } else { endhtm<- previousMap$endhtm }
               
               endhtm<- paste(endhtm,'<input type="checkbox" id="',boxname,'" onClick=\'boxclick(this,',pointsName,',"',boxname,'");\' /> <b>', layerName ,'<b> <hr />',sep="")
+
+                divLegendImage<-tempfile("Legend")  
+                divLegendImage<-substr(divLegendImage, start=regexpr("Legend",divLegendImage),stop=nchar(divLegendImage))
+                legendboxname<-paste('box',divLegendImage,sep="")
+              
+              cxx<-PolyCol(attribute,colPalette,at=at)
+              pp<-legendbar(cxx$brks,colPalette=cxx$col.uniq,legendName=divLegendImage)
+
+                
+              endhtm<- paste(endhtm,' \n <table> <tr>  <td> <input type="checkbox"  checked="checked" id="'
+                             ,legendboxname,'" onClick=\'legendDisplay(this,"',
+                             divLegendImage,'");\' /> LEGEND </td> </tr>  <tr> <td>',
+                             attributeName,'</td> </tr>
+                                    <tr> <td> <div style="display:block;" id="',
+                                   divLegendImage,'"> <img src="',divLegendImage,
+                             '.png" alt="Legend" height="70%"> </div>
+                           </td> </tr> \n </table> \n  <hr> \n',sep="") 
+              
                                                              }
 else if   (class(SP)[1]=="SpatialLines"){
                 lineName<-paste('line',nameOfSP,sep="")
@@ -257,19 +328,27 @@ else if   (class(SP)[1]=="SpatialLines"){
                 
                 var<-paste(var,'var ',lineName,'=[] ; \n')
                 var1=""
-                cxx<-PolyCol(attribute,colPalette)
-                xx<- cxx$cols
-                for(i in 1:length(SP.ll@lines)){
-                lls<-(slot(SP.ll,"lines"))[[i]]
-                lonlat<-slot(slot(lls,"Lines")[[1]],"coords")
-                var1<-paste(var1,createLine(lonlat,
-                                            strokeColor=xx[i],
-                                            strokeOpacity=strokeOpacity,
-                                            strokeWeight=strokeWeight,
-                                            geodesic=geodesic,
-                                            clickable=clickable,
-                                            zIndex=zIndex),'\n',sep="")
-                var1<-paste(var1,lineName,'.push(line); \n',sep="")  }
+                
+                if(length(colPalette)==length(SP.ll@lines)){
+                  xx<- colPalette}else{
+                    cxx<-PolyCol(1:SP.ll@lines,colPalette,at=at)
+                    xx<- cxx$cols
+                  }
+                
+               
+                
+                
+                var1<- paste( lapply(as.list(1:length(SP.ll@lines)), function(i) paste(var1,createLine(SP.ll@lines[[i]],
+                                                                                                       strokeColor=xx[i],
+                                                                                                       strokeOpacity=strokeOpacity,
+                                                                                                       strokeWeight=strokeWeight,
+                                                                                                       geodesic=geodesic,
+                                                                                                       clickable=clickable,
+                                                                                                       zIndex=zIndex),'\n',sep="") 
+                                     )
+                              ,lineName,'.push(line); \n',sep="",collapse='\n')
+                
+                
                 
                 # Put all variables together
                 var<-paste(var,var1)
@@ -279,12 +358,14 @@ else if   (class(SP)[1]=="SpatialLines"){
                 functions<-paste(functions,'showO(',lineName,',"',boxname,'");',sep="")
                 
                 if (!is.list(previousMap)) {
-                endhtm<-c('</script> \n </head> \n <body onload="initialize()"> \n <div id="map_canvas"></div>  \n <div id="cBoxes"> \n')
-                } else { endhtm<- previousMap$endhtm }
+                  endhtm<-c('</script> \n </head> \n <body onload="initialize()"> \n 
+                            <div id="map_canvas"></div>  \n
+                           \n <div id="cBoxes"> \n')               
+                  } else { endhtm<- previousMap$endhtm }
                 
-                endhtm<- paste(endhtm,'<table border="0"> \n <tr> \n  <td> <input type="checkbox" id="',boxname,'" onClick=\'boxclick(this,',lineName,',"',boxname,'");\' /> ', layerName ,' </td> </tr> \n',sep="")
-                endhtm<- paste(endhtm,'<tr> \n  <td> \n <input type="text" id="',textname,'" value="100" onChange=\'setOpacL(',lineName,',"',textname,'")\' size=3 /> Opacity (0-100 %) </td> </tr> \n',sep="")
-                endhtm<- paste(endhtm,'<tr> \n  <td> \n <input type="text" id="',textnameW,'" value="1" onChange=\'setLineWeight(',lineName,',"',textnameW,'")\' size=3 /> Line weight (pixels) </td> </tr> </table> \n',sep="")
+                endhtm<- paste(endhtm,'<table border="0"> \n <tr> \n  <td> <input type="checkbox" id="',boxname,'" onClick=\'boxclick(this,',lineName,',"',boxname,'");\' /> ', layerName ,' </td> </tr>  \n',sep="")
+                endhtm<- paste(endhtm,' \n <tr>  <td> \n <input type="text" id="',textname,'" value="100" onChange=\'setOpacL(',lineName,',"',textname,'")\' size=3 /> Opacity (0-100 %) </td> </tr> \n',sep="")
+                endhtm<- paste(endhtm,' \n <tr> <td> \n <input type="text" id="',textnameW,'" value="1" onChange=\'setLineWeight(',lineName,',"',textnameW,'")\' size=3 /> Line weight (px) </td> </tr> </table> \n',sep="")
                 
                 }
 else if   (class(SP)[1]=="SpatialLinesDataFrame")     {
@@ -296,10 +377,7 @@ else if   (class(SP)[1]=="SpatialLinesDataFrame")     {
             divLegendImage<-tempfile("Legend")  
             divLegendImage<-substr(divLegendImage, start=regexpr("Legend",divLegendImage),stop=nchar(divLegendImage))
             legendboxname<-paste('box',divLegendImage,sep="")
-            for(i in 1:length(SP.ll@data)) {
-            if( identical(attribute,SP.ll@data[,i])){
-             attributeName<-names(SP.ll@data)[i]  }
-            }
+
             att1=""
             
             
@@ -312,66 +390,80 @@ else if   (class(SP)[1]=="SpatialLinesDataFrame")     {
             
             var<-paste(var,'var ',lineName,'=[] ; \n')
             var1=""
-            cxx<-PolyCol(attribute,colPalette)
-            xx<-cxx$cols
-            swxx<-weightATR(attribute,strokeWeight)
-            pp<-lineLegend(cxx$att,colPalette=cxx$col.uniq,linew=strokeWeight,legendName=divLegendImage)
-            for(i in 1:length(SP.ll@lines)){
-            lls<-(slot(SP.ll,"lines"))[[i]]
-            lonlat<-slot(slot(lls,"Lines")[[1]],"coords")
-            var1<-paste(var1,createLine(lonlat,
-                                        strokeColor=xx[i]  ,
-                                        strokeOpacity=strokeOpacity,
-                                        strokeWeight=swxx[i],
-                                        geodesic=geodesic,
-                                        clickable=clickable,
-                                        zIndex=zIndex ),'\n',sep="")
-            var1<-paste(var1,lineName,'.push(line); \n',sep="")
-                               for(k in 1:length(names(SP.ll@data))){
-                               attrib=paste(names(SP.ll@data)[k],':',SP.ll@data[i,k],'<br>')
-                               att1=paste(att1,attrib)
-                                }
-                              att[i]=att1
-                              att1=""
-            }
+
+                cxx<-PolyCol(attribute,colPalette,at=at)
+                xx<- cxx$cols
             
+            if(length(strokeWeight)==length(attribute)){
+              swxx=strokeWeight
+            }else{swxx<-weightATR(attribute,strokeWeight)}
+
+            
+            
+            pp<-legendbar(cxx$brks,colPalette=cxx$col.uniq,legendName=divLegendImage)
+            
+            if(length(attribute)==length(colPalette)){xx= colPalette}
+            
+            
+            
+            var1<- paste( sapply(1:length(SP.ll@lines), function(i)          paste(var1,createLine(SP.ll@lines[[i]],
+                                                                                                   strokeColor=xx[i]  ,
+                                                                                                   strokeOpacity=strokeOpacity,
+                                                                                                   strokeWeight=swxx[i],
+                                                                                                   geodesic=geodesic,
+                                                                                                   clickable=clickable,
+                                                                                                   zIndex=zIndex ),'\n',sep="") 
+            )
+                          ,lineName,'.push(line); \n',sep="",collapse='\n')
+            
+            k = 1:length(names(SP.ll@data))
+            
+            att<- paste ( lapply(as.list(1:length(SP.ll@lines)), function(i) paste(names(SP.ll@data),':',
+                                                                                   
+                                             sapply(k ,function(k) as.character(SP.ll@data[i,k])),'<br>', collapse="")  )   )
+            
+ 
             # Put all variables together
             var<-paste(var,var1)
             
             infW<-""
             
-            for(i in 1:length(SP.ll@lines)){
-            infW<-paste(infW,createInfoWindowEvent(Line_or_Polygon=paste(lineName,
-                        '[',i-1,'] ',sep=""),content=att[i]),' \n')}
+            infW<- paste ( lapply(as.list(1:length(SP.ll@lines)), function(i) 
+              paste(infW,createInfoWindowEvent(Line_or_Polygon=paste(lineName,'[',i-1,'] ',sep=""),
+                                               content=att[i]),' \n')  )  ,collapse='\n' )
+            
             
             functions<-paste(functions,infW,'showO(',lineName,',"',boxname,'");',sep="")
             
             
             if (!is.list(previousMap)) {
-            endhtm<-c('</script> \n </head> \n <body onload="initialize()"> 
-                       \n <div id="map_canvas"></div>  \n <div id="cBoxes"> \n')
+              endhtm<-c('</script> \n </head> \n <body onload="initialize()"> \n 
+                            <div id="map_canvas"></div>  \n
+                           \n <div id="cBoxes"> \n')
             } else { endhtm<- previousMap$endhtm }
             
             endhtm<- paste(endhtm,'<table border="0"> \n <tr> \n  <td> 
                            <input type="checkbox" id="',boxname,'" 
                            onClick=\'boxclick(this,',lineName,',"',
-                           boxname,'");\' /> <b>', layerName ,
-                           '<b> </td> </tr> \n',sep="")
-            endhtm<- paste(endhtm,'<tr> \n  <td> \n <input type="text" id="',
+                           boxname,'");\' /> <b> </tr>', layerName ,
+                           '<b> </td> \n',sep="")
+            endhtm<- paste(endhtm,' \n <tr>  <td> \n <input type="text" id="',
                            textname,'" value="100" onChange=\'setOpacL(',
                            lineName,',"',textname,'")\' size=3 /> 
-                           Opacity (0-100 %) </td> </tr> \n',sep="")
+                           Opacity (0-100 %) </td>  </tr>\n',sep="")
             endhtm<- paste(endhtm,'<tr> \n  <td> \n <input type="text" id="',
                            textnameW,'" value="1" onChange=\'setLineWeight(',
                            lineName,',"',textnameW,'")\' size=3 /> 
-                           Line weight (pixels) </td> </tr> </table> \n',sep="")
-            endhtm<- paste(endhtm,' \n <tr> \n  <td> <input type="checkbox"  checked="checked" id="'
+                           Line weight (pixels) </td>  </tr> \n',sep="")
+            if(legenda){
+            endhtm<- paste(endhtm,' \n  <tr> <td> <input type="checkbox"  checked="checked" id="'
                            ,legendboxname,'" onClick=\'legendDisplay(this,"',
-                           divLegendImage,'");\' /> LEGEND ', layerName ,' ',
-                           attributeName,'<div style="display:block;" id="',
+                           divLegendImage,'");\' /> LEGEND </td> </tr>  <tr> <td>',
+                           attributeName,'</td> </tr> \n
+                           <tr> <td> <div style="display:block;" id="',
                            divLegendImage,'"> <img src="',divLegendImage,
-                           '.png" alt="Legend"></div> 
-                           </td> </tr> \n </table> \n <hr> \n',sep="")
+                           '.png" alt="Legend" height="70%"> </div>
+                           </td> </tr> \n </table> \n   <hr> \n',sep="") }else{endhtm<- paste(endhtm, '</tr> \n </table> \n <hr>  \n')}
             
             
                                                                        }
@@ -392,18 +484,27 @@ else if   (class(SP)[1]=="SpatialPolygons")             {
               
               var<-paste(var,'var ',polyName,'=[] ; \n')
               var1=""
-              cxx<-PolyCol(attribute,colPalette)
-              xx<-cxx$cols
-              for(i in 1:length(SP.ll@polygons)){
-              var1<-paste(var1,createPolygon(SP.ll@polygons[[i]],
-                                       fillColor=xx[i],
-                                       strokeColor=strokeColor,
-                                       strokeOpacity=strokeOpacity,
-                                       strokeWeight=strokeWeight,
-                                       geodesic=geodesic,
-                                       clickable=clickable,
-                                       zIndex=zIndex),'\n',sep="")
-              var1<-paste(var1,polyName,'.push(polygon); \n',sep="")  }
+              if(length(colPalette)==length(SP.ll@polygons)){
+                xx<- colPalette}else{
+                  cxx<-PolyCol(1:SP.ll@polygons,colPalette,at=at)
+                  xx<- cxx$cols
+                }
+              
+              if(length(strokeWeight)==length(SP.ll@polygons)){
+                swxx=strokeWeight
+              }else{swxx=rep(strokeWeight,length(SP.ll@polygons)) }
+              
+              var1<- paste( lapply(as.list(1:length(SP.ll@polygons)), function(i) paste(var1,createPolygon(SP.ll@polygons[[i]],
+                                                                                                           fillColor=xx[i],
+                                                                                                           strokeColor=strokeColor,
+                                                                                                           strokeOpacity=strokeOpacity,
+                                                                                                           strokeWeight=swxx[i],
+                                                                                                           geodesic=geodesic,
+                                                                                                           clickable=clickable,
+                                                                                                           fillOpacity=fillOpacity,
+                                                                                                           zIndex=zIndex),'\n',sep="") 
+                                     )
+                            ,polyName,'.push(polygon); \n',sep="",collapse='\n')
               
               # Put all variables together
               var<-paste(var,var1)
@@ -413,19 +514,20 @@ else if   (class(SP)[1]=="SpatialPolygons")             {
               
               
               if (!is.list(previousMap)) {
-              endhtm<-c('</script> \n </head> \n <body onload="initialize()"> 
-                        \n <div id="map_canvas"></div>  \n <div id="cBoxes"> \n')
+                endhtm<-c('</script> \n </head> \n <body onload="initialize()"> \n 
+                            <div id="map_canvas"></div>  \n
+                           \n <div id="cBoxes"> \n')
               } else { endhtm<- previousMap$endhtm }
               
               endhtm<- paste(endhtm,'<table border="0"> \n <tr> \n  <td> <input 
                             type="checkbox" id="',boxname,'" onClick=\'boxclick(this,',
                             polyName,',"',boxname,'");\' /> ', 
-                            layerName ,' </td> </tr> \n',sep="")
-              endhtm<- paste(endhtm,'<tr> \n  <td> \n <input type="text" id="',
+                            layerName ,' </td>  </tr> \n',sep="")
+              endhtm<- paste(endhtm,' \n <tr> <td> \n <input type="text" id="',
                              textname,'" value="50" onChange=\'setOpac(',
                              polyName,',"',textname,'")\' size=3 /> 
                              Opacity (0-100 %) </td> </tr> \n',sep="")
-              endhtm<- paste(endhtm,'<tr> \n  <td> \n <input type="text"  checked="checked"  id="',
+              endhtm<- paste(endhtm,' \n <tr> <td> \n <input type="text"  checked="checked"  id="',
                              textnameW,'" value="1" onChange=\'setLineWeight(',
                               polyName,',"',textnameW,'")\' size=3 /> Line weight
                                (pixels) </td> </tr> \n </table> \n',sep="")
@@ -441,14 +543,7 @@ else if   (class(SP)[1]=="SpatialPolygonsDataFrame")      {
                   divLegendImage<-substr(divLegendImage, start=regexpr("Legend",divLegendImage),stop=nchar(divLegendImage))
                   legendboxname<-paste('box',divLegendImage,sep="")
                   textnameW<-paste(textname,'W',sep="")
-                  
-                  
-                  
-                  for(i in 1:length(SP.ll@data)) {
-                  if( identical(attribute,SP.ll@data[,i])){
-                   attributeName<-names(SP.ll@data)[i]  }
-                  }
-                  
+
                   att<-rep(NA,length(slot(SP.ll,"polygons")))
                   att1=""
                   
@@ -461,82 +556,86 @@ else if   (class(SP)[1]=="SpatialPolygonsDataFrame")      {
                   
                   var<-paste(var,'var ',polyName,'=[] ; \n')
                   var1=""
-                  cxx<-PolyCol(attribute,colPalette)
-                  xx<-cxx$cols
+
+                      cxx<-PolyCol(attribute,colPalette,at=at)
+                      xx<- cxx$cols
+                      pp<-legendbar(cxx$brks,colPalette=cxx$col.uniq,legendName=divLegendImage)
+                   
+                  if(length(attribute)==length(colPalette)){xx= colPalette}
 
                   
-                 pp<-polyLegend(cxx$att,colPalette=cxx$col.uniq,legendName=divLegendImage,strokeColor=strokeColor)
+                  if(length(strokeWeight)==length(SP.ll@polygons)){
+                    swxx=strokeWeight
+                  }else{swxx=rep(strokeWeight,length(SP.ll@polygons)) }       
                   
-                  for(i in 1:length(SP.ll@polygons)){
-                  var1<-paste(var1,createPolygon(SP.ll@polygons[[i]],
-                                           fillColor=xx[i],
-                                           strokeColor=strokeColor,
-                                           strokeOpacity=strokeOpacity,
-                                           strokeWeight=strokeWeight,
-                                           geodesic=geodesic,
-                                           clickable=clickable,
-                                           zIndex=zIndex),'\n',sep="")
-                  var1<-paste(var1,polyName,'.push(polygon); \n',sep="")
-                                     for(k in 1:length(names(SP.ll@data))){
-                                     attrib=paste(names(SP.ll@data)[k],':',SP.ll@data[i,k],'<br>')
-                                     att1=paste(att1,attrib)
-                                      }
-                                    att[i]=att1
-                                    att1=""
-                  }
-                  
-                  # Put all variables together
+
+
+var1<- paste( lapply(as.list(1:length(SP.ll@polygons)), function(i) paste(var1,createPolygon(SP.ll@polygons[[i]],
+                                                                                            fillColor=xx[i],
+                                                                                            strokeColor=strokeColor,
+                                                                                            strokeOpacity=strokeOpacity,
+                                                                                            strokeWeight=swxx[i],
+                                                                                            geodesic=geodesic,
+                                                                                            clickable=clickable,
+                                                                                             fillOpacity=fillOpacity,
+                                                                                            zIndex=zIndex),'\n',sep="") 
+                     )
+             ,polyName,'.push(polygon); \n',sep="",collapse='\n')  
+
+
+                  k = 1:length(names(SP.ll@data))
+att<- paste ( lapply(as.list(1:length(SP.ll@polygons)), function(i) paste(names(SP.ll@data),':',
+                                                                          sapply(k ,function(k) as.character(SP.ll@data[i,k])),'<br>', collapse="")  )   )
+
                   var<-paste(var,var1)
                   
                   infW<-""
-                  
-                  for(i in 1:length(SP.ll@polygons)){
-                  infW<-paste(infW,createInfoWindowEvent(Line_or_Polygon=
-                      paste(polyName,'[',i-1,'] ',sep=""),content=att[i]),' \n')}
+infW<- paste ( lapply(as.list(1:length(SP.ll@polygons)), function(i) paste(infW,createInfoWindowEvent(Line_or_Polygon=
+                                                                    paste(polyName,'[',i-1,'] ',sep=""),content=att[i]),' \n')  )  ,collapse='\n' )                  
+
                   
                   functions<-paste(functions,infW,'showO(',polyName,',"',boxname,'");',sep="")
                   
                   
                   
                   if (!is.list(previousMap)) {
-                  endhtm<-c('</script> \n </head> \n <body onload="initialize()">
-                        \n <div id="map_canvas"></div>  \n <div id="cBoxes"> \n')
+                    endhtm<-c('</script> \n </head> \n <body onload="initialize()"> \n 
+                            <div id="map_canvas"></div>  \n
+                              \n <div id="cBoxes"> \n')
                   } else { endhtm<- previousMap$endhtm }
                   
                   endhtm<- paste(endhtm,'<table border="0"> \n <tr> \n  <td> 
                                  <input type="checkbox" id="',boxname,'" 
                                  onClick=\'boxclick(this,',polyName,',"',boxname,
                                  '");\' /> <b> ', layerName,'<b> </td> </tr> \n',sep="")
-                  endhtm<- paste(endhtm,'<tr> \n  <td> \n <input type="text" id="',
+                  endhtm<- paste(endhtm,' \n <tr> <td> \n <input type="text" id="',
                                  textname,'" value="50" onChange=\'setOpac(',
                                  polyName,',"',textname,'")\' size=3 /> 
                                  Opacity (0-100 %) </td> </tr> \n',sep="")
-                  endhtm<- paste(endhtm,'<tr> \n  <td> \n <input type="text" 
+                  endhtm<- paste(endhtm,' \n <tr>  <td> \n <input type="text" 
                                  id="',textnameW,'" value="1" onChange=\'
                                  setLineWeight(',polyName,',"',textnameW,'")\' 
                                  size=3 /> Line weight (pixels) </td> </tr> \n ',sep="")
-                  endhtm<- paste(endhtm,' \n <tr> \n  <td> <input type="checkbox"  checked="checked"  id="',
-                                 legendboxname,'" onClick=\'legendDisplay(this,"',
-                                 divLegendImage,'");\' /> LEGEND ', layerName ,' ',
-                                 attributeName,'<div style="display:block;" id="',
-                                 divLegendImage,'"> <img src="',divLegendImage,
-                                 '.png" alt="Legend"></div> </td> </tr>
-                                  \n </table> \n <hr> \n',sep="")
+                  if(legenda){
+                    endhtm<- paste(endhtm,' \n <tr>  <td> <input type="checkbox"  checked="checked" id="'
+                                   ,legendboxname,'" onClick=\'legendDisplay(this,"',
+                                   divLegendImage,'");\' /> LEGEND </td> </tr>  <tr> <td>',
+                                   attributeName,'</td> </tr>
+                                    <tr> <td> <div style="display:block;" id="',
+                                   divLegendImage,'"> <img src="',divLegendImage,
+                                   '.png" alt="Legend" height="70%"> </div>
+                           </td> </tr> \n </table> \n  <hr> \n',sep="") }else{ endhtm<- paste(endhtm, '</tr> \n </table> \n <hr>  \n') }
                                      }
 else if (class(SP)[1]=="SpatialPixelsDataFrame" || class(SP)[1]=="SpatialGridDataFrame") {
                   
-                rasterName<-paste('raster',nameOfSP,sep="")
+                rasterName<-tempfile("grid")
+                rasterName<-substr(rasterName, start=regexpr("grid",rasterName),stop=nchar(rasterName))
                 boxname<-paste(nameOfSP,'box',sep="")
                 divLegendImage<-tempfile("Legend")  
                 divLegendImage<-substr(divLegendImage, start=regexpr("Legend",divLegendImage),stop=nchar(divLegendImage))
                 legendboxname<-paste('box',divLegendImage,sep="")
                 textname<- paste(nameOfSP,'text',sep="")
-                
-                for(i in 1:length(SP.ll@data)) {
-                if( identical(attribute,SP.ll@data[,i])){
-                 attributeName<-names(SP.ll@data)[i]  }
-                }
-               
+
                 if (!is.list(previousMap)) {
                 var<-""
                 # Declare variables in JavaScript marker and map
@@ -555,34 +654,25 @@ else if (class(SP)[1]=="SpatialPixelsDataFrame" || class(SP)[1]=="SpatialGridDat
                          if(is.factor(attribute)){
                          
                               if(length(colPalette)!=nlevels(attribute)) {
+                                pal<-colorRampPalette(c( "green", "orange","brown"), space = "Lab")
                                xx<-colPalette<- as.character(substr(pal(nlevels(attribute)),1,7))    }
                               
-                              pp<-rasterLegend(attribute,
-                              colPalette=xx,legendName=divLegendImage)
+                              #pp<-rasterLegend(attribute,colPalette=xx,legendName=divLegendImage)
                               SP$arg1111<-as.numeric(SP[attributeName]@data[,1])
                               }else{
-                                   bre<-quantile(attribute, seq(1,length(colPalette))/length(colPalette))
-                                    breakss<-factor(c(min(attribute),bre))
-                                    break_unique<-as.numeric(levels(breakss))
-                                    
-                                    if(length(colPalette)>length(break_unique)){
-                                         colPalette<-colPalette[1:length(break_unique)] } 
-                                    
-                                                if(sum(as.numeric(levels(factor(attribute))))-sum(break_unique) ==0 ){
-                                                       xxx<-factor(attribute)
-                                                       } else{
-                                               xxx<-factor(cut(attribute, break_unique ,include.lowest = TRUE, dig.lab=6) )
-                                                       }
-                                  pp<-rasterLegend(attribute= xxx   ,
-                                  colPalette=xx,legendName=divLegendImage)
+
                                   SP$arg1111<-SP[zcol]@data[,1]
                                      }
-                              
+                
+                cxx=PolyCol(SP[attributeName]@data[,1],colPalette,at)
+
+                xx=cxx$cols
+                pp<-legendbar(cxx$brks,colPalette=cxx$col.uniq,legendName=divLegendImage)            
                               
                 SGqk <- GE_SpatialGrid(SP.ll)
-                png(filename =paste(rasterName,'.png',sep=""), width=2*SGqk$width, height=2*SGqk$height, bg="transparent")
+                png(filename =paste(rasterName,'.png',sep=""), width=10*SGqk$width, height=10*SGqk$height, bg="transparent")
                 par(mar=c(0,0,0,0), xaxs="i", yaxs="i")
-                image(as.image.SpatialGridDataFrame(SP["arg1111"]), col=colPalette)
+                image(as.image.SpatialGridDataFrame(SP["arg1111"]),breaks=cxx$brks,  col=cxx$col.uniq)
                 
                 dev.off()
                 
@@ -591,35 +681,44 @@ else if (class(SP)[1]=="SpatialPixelsDataFrame" || class(SP)[1]=="SpatialGridDat
                 
                 
                 if (!is.list(previousMap)) {
-                endhtm<-c('</script> \n </head> \n <body onload="initialize()"> \n 
-                            <div id="map_canvas"></div>  \n <div id="cBoxes"> \n')
+                  endhtm<-c('</script> \n </head> \n <body onload="initialize()"> \n 
+                            <div id="map_canvas"></div>  \n
+                           \n <div id="cBoxes"> \n')
                 } else { endhtm<- previousMap$endhtm }
                 
                 endhtm<- paste(endhtm,'<table border="0"> \n <tr> \n  <td> <input type="checkbox" id="',
                                   boxname,'" onClick=\'boxclickR(this,',rasterName,',"',boxname,
                                   '");\' /> <b> ', layerName ,'<b> </td> </tr> \n',sep="")
                                   
-                  endhtm<- paste(endhtm,'  \n <tr> \n  <td> <input type="text" id="',
+                  endhtm<- paste(endhtm,'  \n  <tr> <td> <input type="text" id="',
                                   textname,'" value="50" onChange=\'setOpacR(',
-                                  rasterName,',"',textname,'")\' size=3 />  Opacity (0-100 %)</td> </tr> \n',sep="")
+                                  rasterName,',"',textname,'")\' size=3 />  Opacity (0-100 %)</td>  </tr> \n',sep="")
                   
-                endhtm<- paste(endhtm,' \n <tr> \n  <td> <input type="checkbox" checked="checked" id="',
-                      legendboxname,'" onClick=\'legendDisplay(this,"',divLegendImage,'");\' /> LEGEND ',
-                      layerName  ,' ',attributeName,'<div style="display:block;" id="',divLegendImage,
-                       '"> <img src="',divLegendImage,'.png" alt="Legend"></div> </td> </tr> \n </table> \n <hr> \n',sep="")
+                endhtm<-paste(endhtm,' \n <tr> <td> <input type="checkbox"  checked="checked" id="'
+                              ,legendboxname,'" onClick=\'legendDisplay(this,"',
+                              divLegendImage,'");\' /> LEGEND </td> </tr>  <tr> <td>',
+                              attributeName,'</td></tr>
+                              <tr> <td> <div style="display:block;" id="',
+                              divLegendImage,'"> <img src="',divLegendImage,
+                              '.png" alt="Legend" height="70%"> </div>
+                           </td> </tr> \n </table> \n   <hr> \n',sep="")
                                                                               }
 else  {
     message("SP object must be Spatial class!") }
     
 
 
-if (add==F){functions<- paste(functions,'}')
+if (add==F){functions<- paste(functions," google.maps.event.addListener(map, 'rightclick', function(event) {
+    var lat = event.latLng.lat();
+    var lng = event.latLng.lng();
+    alert('Lat=' + lat + '; Lng=' + lng);}); " , " \n }" )
 endhtm<-paste(endhtm,'</div> \n </body>  \n  </html>')
 write(starthtm, filename,append=F)
 write(var, filename,append=TRUE)
 write(functions, filename,append=TRUE)
 write(endhtm, filename,append=TRUE)
-browseURL(filename)}
+if(openMap){browseURL(filename)}
+            }
 
 
 x <- list(starthtm=starthtm,var=var, functions=functions,endhtm=endhtm)

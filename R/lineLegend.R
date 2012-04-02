@@ -1,9 +1,9 @@
 lineLegend <-
-function (attribute,colPalette,linew=1,legendName="Legend",bgc='#B0C4DEFF') {
+function (attribute,colPalette,linew=1,legendName="Legend",bgc='white') {
                        
 		niv  <- attribute 
-
-png(filename =paste(legendName,'.png',sep=""), width=250, height=length(niv)*25,units = "px", bg="white")
+if(length(niv)>30){h=720}else{h=360}
+png(filename =paste(legendName,'.png',sep=""),  height=h, width=144,units = "px", bg="white")
 par(mai=c(0,0,0,0),bg=bgc)
 plot(0,xlab="",ylab="",type="n", axes=F,xlim=c(0,3),ylim=c(0,length(niv)))
 
@@ -12,10 +12,10 @@ plot(0,xlab="",ylab="",type="n", axes=F,xlim=c(0,3),ylim=c(0,length(niv)))
 cols <-colPalette
 
 k=1
-	for(i in nlevels(factor(attribute)):1) {
-	segments( 0 ,i-.5    , 1 , i-.5 ,
-			col=cols[k], lwd=linew[k])
-	 text(1.4,i-.5,niv[k],cex=1)
+	for(i in 1: nlevels(factor(attribute))) {
+	segments(0,  i-.5, 1.7,i-.5,
+			col=cols[i], lwd=linew[i])
+	 text(2,i-.5,niv[i],cex=1)
     k=k+1}
     graph1 <- dev.cur()
      dev.off(graph1)

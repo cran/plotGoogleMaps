@@ -1,5 +1,5 @@
 createLine <-
-function(lonlatmatrix,
+function(oneSPlinesSlot,
                      name="line",
                      map="map",
                      strokeColor="#FFAA00",
@@ -21,6 +21,11 @@ function(lonlatmatrix,
                  geodesic='false'
               }
 
+# lonlatmatrix<-slot(slot(oneSPlinesSlot,"Lines")[[1]],"coords")              
+              
+lonlatmatrix<-  oneSPlinesSlot@Lines[[1]]@coords
+              
+              
 pts=paste('new google.maps.LatLng(',lonlatmatrix[1:((length(lonlatmatrix)/2-1)),2],
           ',',lonlatmatrix[1:((length(lonlatmatrix)/2-1)),1],'),\n',collapse="")
 pts=paste('[',pts,'new google.maps.LatLng(',lonlatmatrix[length(lonlatmatrix)/2,2],

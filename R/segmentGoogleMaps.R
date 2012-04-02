@@ -15,10 +15,10 @@ function(SP,
                      geodesic=TRUE,
                      clickable=TRUE,
                      zIndex="null",
-                               map.width="80%",
+                               map.width="100%",
                                map.height="100%",
                                layerName="",
-                               control.width="20%",
+                               control.width="100%",
                                control.height="100%",
                                zoom=15,
                                fitBounds=TRUE,
@@ -32,7 +32,8 @@ function(SP,
                                scaleControlOptions= 'STANDARD',
                                noClear=FALSE,
                                scrollwheel =TRUE     ,
-                               streetViewControl= FALSE) {
+                               streetViewControl= FALSE,
+                               openMap=TRUE) {
 
 
 ################################################################################
@@ -47,9 +48,13 @@ nameOfSP<-gsub('[!,",#,$,%,&,(,),*,+,-,.,/,:,;,<,=,>,?,@,^,`,|,~]', "x", nameOfS
 nameOfSP<-gsub('[[]', "X", nameOfSP)
 nameOfSP<-gsub('[]]', "X", nameOfSP)
 
-SP<-SP[,zcol]
+
 SP <-as(SP, "SpatialPointsDataFrame")
+
+
 SP.ll <- spTransform(SP, CRS("+proj=longlat +datum=WGS84"))
+
+
 
 Centar=c(mean(SP.ll@bbox[1,]),mean(SP.ll@bbox[2,]))
 sw<-c(SP.ll@bbox[2,1],SP.ll@bbox[1,1])
@@ -81,22 +86,13 @@ colPalette<-apply(rgbc,2,function(x) rgb(x[1],x[2],x[3],maxColorValue=255))}
 if(layerName==""){
 layerName=nameOfSP}
 
-    if(scalelist){
-    xdata<-SP@data[,zcol]
-    xdata <- apply(xdata, 2L, function(x) (x - min(x, na.rm = TRUE))/diff(range(x, na.rm = TRUE)))
-    xsum <- apply(xdata, 1L,function(x) ( sum(x)))
-    scalelist<-xsum/max(xsum)
-    scalelist<-sqrt(scalelist)} else{ scalelist<-rep(1,length(SP.ll@coords[,1])) }
-
-
-
 attributeName<-paste(names(SP.ll@data[,zcol]),collapse ="",sep=" ")
 
 if(layerName==""){
 layerName=paste(nameOfSP,attributeName)}
 
 
-att<-rep(NA,length(SP.ll@coords[,1]))
+
 att1=""
 
 if (!is.list(previousMap)) {
@@ -113,35 +109,34 @@ pp<-segmentLegend(attribute=names(SP.ll@data[,zcol]),
                         colPalette=colPalette,
                         legendName=divLegendImage,
                         border=ifelse(strokeColor=="",NA,strokeColor),
-                        bgc='#B0C4DEFF')
+                        bgc='white')
 
-for(i in 1:length(SP.ll@coords[,1])){
-var1<-paste(var1, createSphereSegment(SP.ll[i,zcol],
-                              max.radius=max.radius,  #m
-                             name="polygon",
-                             key.entries = as.numeric(SP.ll@data[i,zcol]),
-                             scalelist= scalelist[i],
-                             do.sqrt = do.sqrt,
-                             fillColor=colPalette,
-                             fillOpacity=fillOpacity,
-                             map="map",
-                             strokeColor=strokeColor,
-                             strokeOpacity= strokeOpacity,
-                             strokeWeight=strokeWeight,
-                             geodesic=geodesic,
-                             clickable=clickable,
-                             zIndex=zIndex),'\n',sep="")
-                             
-                for(jj in 1:length(zcol)){         
-      var1<-paste(var1,polyName,'.push(polygon[',jj-1 ,']); \n',sep="")  }
-      
-                         for(k in 1:length(names(SP.ll@data))){
-                         attrib=paste(names(SP.ll@data)[k],':',SP.ll@data[i,k],'<br>')
-                         att1=paste(att1,attrib)
-                          }
-          att[i]=att1
-          att1=""
-                                       }
+xx=rep(colPalette,length(SP.ll@coords[,1]))
+
+SP.ll=pieSP(SP.ll,
+       zcol,
+       scalelist,  # TRUE proportional, FALSE pie charts same size
+       max.radius,  #m
+       do.sqrt )
+
+var1<- paste( lapply(as.list(1:length(SP.ll@polygons)), function(i) paste(var1,createPolygon(SP.ll@polygons[[i]],
+                                                                                             fillColor=xx[i],
+                                                                                             strokeColor=strokeColor,
+                                                                                             strokeOpacity=strokeOpacity,
+                                                                                             strokeWeight=strokeWeight,
+                                                                                             geodesic=geodesic,
+                                                                                             clickable=clickable,
+                                                                                             fillOpacity=fillOpacity,
+                                                                                             zIndex=zIndex),'\n',sep="") 
+)
+              ,polyName,'.push(polygon); \n',sep="",collapse='\n')  
+
+
+k = 1:length(names(SP.ll@data))
+att<- paste ( lapply(as.list(1:length(SP.ll@polygons)), function(i) paste(names(SP.ll@data),':',
+                                                                          sapply(k ,function(k) as.character(SP.ll@data[i,k])),'<br>', collapse="")  )   )
+
+
 # Put all variables together
 var<-paste(var,var1)
 if (!is.list(previousMap)) {
@@ -181,6 +176,8 @@ functions<-paste(functions,'function boxclickR(box,R,boxname) { \n if (box.check
 functions<-paste(functions,'function legendDisplay(box,divLegendImage){
 \n element = document.getElementById(divLegendImage).style; \n if (box.checked)
  { element.display="block";} else {  element.display="none";}} \n',sep="")
+functions<-paste(functions,"google.maps.event.addListener(map,'mousemove',function(event) {
+  document.getElementById('latlong').innerHTML = event.latLng.lng() + ', ' + event.latLng.lat()}); \n", sep="")
  
 init<-createInitialization(SP.ll,
                                add=T,
@@ -200,55 +197,83 @@ init<-createInitialization(SP.ll,
                                streetViewControl= streetViewControl)
 # Put all functions together
 functions<-paste( functions,init, sep="")  }else{ functions<- previousMap$functions}
-infW<-""
 
-for(i in 1:length(SP.ll@coords[,1])){
-   for(k in  ncol(SP.ll@data):1){
-infW<-paste(infW,createInfoWindowEvent(Line_or_Polygon=
-paste(polyName,'[',3*i-k,'] ',sep=""),content=att[i]),' \n')}}
+infW<-""
+infW<- paste ( lapply(as.list(1:length(SP.ll@polygons)), function(i) paste(infW,createInfoWindowEvent(Line_or_Polygon=
+  paste(polyName,'[',i-1,'] ',sep=""),content=att[i]),' \n')  )  ,collapse='\n' )
 
 functions<-paste(functions,infW,'showO(',polyName,',"',boxname,'");',sep="")
 
 
+if(map.width!=control.width){
+  css= paste('\n #map_canvas { float: left;
+ width:', map.width,';
+ height:' , map.height,'; }
+\n #cBoxes {float: left;
+width:', control.width,';
+height: ', control.height,';
+overflow:auto} \n') 
+  }else{
+    css=' #map_canvas {min-height: 100%;
+height:auto; }
+    
+    #cBoxes {position:absolute;
+    right:5px;
+    top:50px;
+    background:white}'
+}
+
+
 starthtm=paste('<html> \n <head> \n <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
 \n <style type="text/css">  \n html { height: 100% } \n body { height: 100%; margin: 0px; padding: 0px }
- \n #map_canvas { float: left;
-  width:', map.width,';
-  height:' , map.height,'; }
- \n #cBoxes {float: left;
-  width:', control.width,';
-  height: ', control.height,';
- overflow:auto;
- background-color:#b0c4de } \n </style> \n
- <script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"> </script>  \n
- <script language="javascript"> ')
+               ',css,'
+               </style> \n
+               <script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"> </script>  \n
+               <script language="javascript"> \n ')
+
 
 if (!is.list(previousMap)) {
-endhtm<-c('</script> \n </head> \n <body onload="initialize()"> \n <div id="map_canvas"></div>  \n <div id="cBoxes"> \n')
+  endhtm<-c('</script> \n </head> \n <body onload="initialize()"> \n 
+                            <div id="map_canvas"></div>  \n
+                           \n <div id="cBoxes"> \n')
 } else { endhtm<- previousMap$endhtm }
 
-endhtm<- paste(endhtm,'<table border="0"> \n <tr> \n  <td> <input type="checkbox" id="',
-               boxname,'" onClick=\'boxclick(this,',polyName,',"',boxname,'");\' /> <b> ',
-               layerName ,'<b> </td> </tr> \n',sep="")
-endhtm<- paste(endhtm,'<tr> \n  <td> \n <input type="text" id="',
-               textname,'" value="50" onChange=\'setOpac(',polyName,',"',
-               textname,'")\' size=3 /> Opacity (0-100 %) </td> </tr> \n',sep="")
-endhtm<- paste(endhtm,'<tr> \n  <td> \n <input type="text" id="',textnameW,
-               '" value="1" onChange=\'setLineWeight(',polyName,',"',textnameW,
-               '")\' size=3 /> Line weight (pixels) </td> </tr> \n ',sep="")
-endhtm<- paste(endhtm,' \n <tr> \n  <td> <input type="checkbox" checked="checked" id="',legendboxname, 
-               '" onClick=\'legendDisplay(this,"',divLegendImage,'");\' /> LEGEND ',  
-               layerName ,'<div style="display:block;" id="',
-               divLegendImage,'"> <img src="',divLegendImage,
-               '.png" alt="Legend"></div> </td> </tr> \n </table> \n <hr> \n',sep="")
+endhtm<- paste(endhtm,'<table border="0"> \n <tr> \n  <td> 
+                                 <input type="checkbox" id="',boxname,'" 
+                                 onClick=\'boxclick(this,',polyName,',"',boxname,
+               '");\' /> <b> ', layerName,'<b> </td> </tr> \n',sep="")
 
-if (add==F){functions<- paste(functions,'}')
+endhtm<- paste(endhtm,' \n <tr> <td> \n <input type="text" id="',
+               textname,'" value="50" onChange=\'setOpac(',
+               polyName,',"',textname,'")\' size=3 /> 
+                                 Opacity (0-100 %) </td> </tr> \n',sep="")
+
+endhtm<- paste(endhtm,' \n <tr>  <td> \n <input type="text" 
+                                 id="',textnameW,'" value="1" onChange=\'
+                                 setLineWeight(',polyName,',"',textnameW,'")\' 
+                                 size=3 /> Line weight (pixels) </td> </tr> \n ',sep="")
+
+endhtm<- paste(endhtm,' \n <tr>  <td> <input type="checkbox"  checked="checked" id="'
+               ,legendboxname,'" onClick=\'legendDisplay(this,"',
+               divLegendImage,'");\' /> LEGEND </td> </tr>  <tr> <td>',
+               attributeName,'</td> </tr>
+                                    <tr> <td> <div style="display:block;" id="',
+                                   divLegendImage,'"> <img src="',divLegendImage,
+               '.png" alt="Legend" height="70%"> </div>
+                           </td> </tr> \n </table> \n  <hr> \n',sep="")
+
+
+if (add==F){functions<- paste(functions," google.maps.event.addListener(map, 'rightclick', function(event) {
+    var lat = event.latLng.lat();
+    var lng = event.latLng.lng();
+    alert('Lat=' + lat + '; Lng=' + lng);}); " , " \n }" )
 endhtm<-paste(endhtm,'</div> \n </body>  \n  </html>')
 write(starthtm, filename,append=F)
 write(var, filename,append=TRUE)
 write(functions, filename,append=TRUE)
 write(endhtm, filename,append=TRUE)
-browseURL(filename)}
+if(openMap){browseURL(filename)}
+ }
 
 
 x <- list(starthtm=starthtm,var=var, functions=functions,endhtm=endhtm)

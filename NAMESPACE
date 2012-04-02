@@ -4,4 +4,4 @@ import(
   sp,
   rgdal,
   maptools)
-export(plotGoogleMaps,bubbleGoogleMaps,segmentGoogleMaps,ellipseGoogleMaps)
+export(bubbleGoogleMaps,bubbleSP,ellipseGoogleMaps,elSPDF,iconlabels,pieSP,plotGoogleMaps,PolyCol,segmentGoogleMaps,stplotGoogleMaps,vectorsSP)

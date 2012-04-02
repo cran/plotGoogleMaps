@@ -14,15 +14,16 @@ ellipseGoogleMaps(SP,
                   colPalette = NULL, 
                   strokeColor = '#FFAA00', 
                   strokeOpacity = 1, 
+                  fillOpacity=0.7,
                   strokeWeight = 1, 
                   geodesic = TRUE, 
                   clickable = TRUE,  
                   zIndex = 'null', 
-                   map.width = '80\%',
-                   map.height = '100\%', 
-                   layerName = '', 
-                   control.width = '20\%', 
-                   control.height = '100\%',
+                               map.width="100\%",
+                               map.height="100\%",
+                               layerName="",
+                              control.width="100\%",
+                              control.height="100\%",
                   zoom = 15, 
                   fitBounds = TRUE, 
                   mapTypeId = 'HYBRID', 
@@ -35,7 +36,8 @@ ellipseGoogleMaps(SP,
                   scaleControlOptions = 'STANDARD', 
                   noClear = FALSE, 
                   scrollwheel = TRUE, 
-                  streetViewControl = FALSE)
+                  streetViewControl = FALSE,
+                  openMap=TRUE)
 }
 \arguments{
   \item{SP}{object of \link[sp]{SpatialPointsDataFrame-class} with
@@ -55,6 +57,7 @@ ellipseGoogleMaps(SP,
                      like key.entries}
   \item{strokeColor}{the color to draw the border of circle (the plotting symbols), NULL for no border}
   \item{strokeOpacity}{the stroke opacity between 0.0 and 1.0}
+  \item{fillOpacity}{the fill opacity between 0.0 and 1.0}
    \item{strokeWeight}{the stroke width in pixels}
   \item{geodesic}{render each edge as a geodesic (a segment of a 'great circle')}
   \item{clickable}{indicates whether this plotting symbol handles click events}
@@ -93,6 +96,7 @@ ellipseGoogleMaps(SP,
   \item{noClear}{if TRUE, do not clear the contents of the Map div.}
   \item{scrollwheel}{if FALSE, disables scrollwheel zooming on the map.}
   \item{streetViewControl}{the initial enabled or disabled state of the Street View pegman control}
+  \item{openMap}{if TRUE map is browesed by default browser}
 }
 \value{This function returns a list with HTML, JavaScript, Google Maps API key and
        else what is necessary for the final web map. The second output is htm file ready to use stored in working direcoty.}

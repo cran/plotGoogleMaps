@@ -7,11 +7,13 @@
 plotGoogleMaps(SP, 
               filename = '',
               zcol = 1,
+              at=NULL,
               add = FALSE, 
               previousMap = NULL,
               colPalette = NULL,
               strokeColor = '#FFAA00',
-              strokeOpacity = 1, 
+              strokeOpacity = 1,
+              fillOpacity=0.7,
               strokeWeight = 1,
               geodesic = TRUE, 
               clickable = TRUE,
@@ -20,11 +22,11 @@ plotGoogleMaps(SP,
               flat = TRUE, 
               visible = TRUE, 
               zIndex = 'null',
-              map.width = '80\%',
-              map.height = '100\%',
-              layerName = '', 
-              control.width = '20\%', 
-              control.height = '100\%', 
+              map.width="100\%",
+              map.height="100\%",
+              layerName="",
+              control.width="100\%",
+              control.height="100\%",
               zoom = 15, 
               fitBounds = TRUE,
               mapTypeId = 'HYBRID', 
@@ -37,7 +39,8 @@ plotGoogleMaps(SP,
               scaleControlOptions = 'STANDARD',
               noClear = FALSE,
               scrollwheel = TRUE, 
-              streetViewControl = FALSE) }
+              streetViewControl = FALSE,
+              openMap=TRUE) }
 \arguments{
   \item{SP}{object of \link[sp]{Spatial-class} with
           associated coordinate reference systems}
@@ -45,6 +48,7 @@ plotGoogleMaps(SP,
          the function will create filename same as the name of SP object with htm extension.}
   \item{zcol}{variable column name, or column number after removing spatial coordinates 
              from x@data: 1 refers to the first non-coordinate column}
+  \item{at}{values at which colours will change}
   \item{add}{logical; if TRUE the result of the function will be a list stored as variable 
              in the R. It is possible to combine more layers in the one plot, previously saved
              output from plotGoogleMaps should be given in the previousMap attribute.}
@@ -53,6 +57,7 @@ plotGoogleMaps(SP,
   \item{colPalette}{colours to be used to fill polygon or colour for the line}
   \item{strokeColor}{the color to draw the borders of polygon, NULL for no border}
   \item{strokeOpacity}{the stroke opacity between 0.0 and 1.0 for the polygon or line}
+  \item{fillOpacity}{the fill opacity (polygons) between 0.0 and 1.0}
   \item{strokeWeight}{the stroke width in pixels for polygon border or line}
   \item{geodesic}{render each edge as a geodesic (a segment of a 'great circle')}
   \item{clickable}{indicates whether this marker (point), polygon or line handles click events}
@@ -95,6 +100,7 @@ plotGoogleMaps(SP,
   \item{noClear}{if TRUE, do not clear the contents of the Map div.}
   \item{scrollwheel}{if FALSE, disables scrollwheel zooming on the map.}
   \item{streetViewControl}{The initial enabled or disabled state of the Street View pegman control}
+  \item{openMap}{if TRUE map is browesed by default browser}
 }
 \value{This function returns a list with HTML, JavaScript, Google Maps API key and
        else what is necessary for the final web map. The second output is htm file ready to use.}

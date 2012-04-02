@@ -1,5 +1,7 @@
 ellip <-
-function(a,b, alpha = 0, loc = c(0,0), n = 100,  Id="1"){
+function(a,b, 
+         alpha = 0, # degrees
+         loc = c(0,0), n = 100,  Id="1"){
     B <- min(a,b)
     A <- max(a,b)
     ## B <= A

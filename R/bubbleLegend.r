@@ -3,7 +3,7 @@ function (shape="t",
                         attribute,
                         colPalette=NULL,
                         legendName="Legend",
-                        bgc='#B0C4DEFF',
+                        bgc='white',
                         scale.level=1,
                         strokeColor="#FFAA00") {
 

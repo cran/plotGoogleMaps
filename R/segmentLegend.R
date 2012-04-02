@@ -3,7 +3,7 @@ function (attribute,
                         colPalette=rainbow(length(attribute)),
                         border=NA,
                         legendName="Legend",
-                        bgc='#B0C4DEFF') {
+                        bgc='white') {
 
 
 png(filename=paste(legendName,'.png',sep=""), width=300,

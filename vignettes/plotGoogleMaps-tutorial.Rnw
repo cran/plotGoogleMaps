@@ -1,5 +1,5 @@
-% \VignetteIndexEntry{plotGoogleMaps: An R Package for creating Google map mashup within R }
-% \VignetteKeywords{R, Google Maps API, sp, mup mashup}
+% \VignetteIndexEntry{A plotGoogleMaps tutorial}
+% \VignetteKeywords{R, Google Maps API, sp,STDF,STDIF, mup mashup}
 % \VignettePackage{plotGoogleMaps}
 
 \documentclass[a4paper]{article}
