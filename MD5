@@ -1,7 +1,7 @@
-1aaf28d8d09c1ec19536de1d64b71185 *DESCRIPTION
+466c625797f0b9394c4998e0505e6de9 *DESCRIPTION
 143e7aad9ccf97ba2610c2be05ef3ccc *NAMESPACE
 771677985f879796c29d62243f95070d *R/PolyCol.R
-70d476e7088fb24e67464295643a2ee5 *R/bubbleGoogleMaps.R
+7ceb28e89195f7fff2bcd26d61af19c2 *R/bubbleGoogleMaps.R
 de40ba4343c387b132d45155b6b13bd2 *R/bubbleLegend.r
 50a436f7e1e978d5da7eeb5d3f3d6ae9 *R/createInfoWindowEvent.R
 d812eec64ff0d820a13b2555c3524f6b *R/createInfoWindowEventM.R
@@ -24,11 +24,11 @@ cf4cd5d0c72e56a3bf9a36ec04d7be70 *R/rasterLegend.R
 431becaa359c31c5c17e6945d13567e5 *R/segmentGoogleMaps.R
 2b61ddc220466dda3f86f9421f309638 *R/segmentLegend.R
 394569d3ef7e1aeca14675833983b383 *R/weightATR.R
-eb3b1529945839ba4243387fa33286d1 *inst/doc/plotGoogleMaps-intro.Rnw
-7484cab3834da1d257aef4e83cf5a051 *inst/doc/plotGoogleMaps-intro.pdf
+512aef0e3922f81b22772f54600d07b3 *inst/doc/plotGoogleMaps-intro.Rnw
+8d15978e614b97b137e84c1ac947f24a *inst/doc/plotGoogleMaps-intro.pdf
 bb815dfc1ab2b8c944750e36bb3db5d0 *man/bubbleGoogleMaps.Rd
 93ae8d84ab4c0618a70f6eaec5483e55 *man/ellipseGoogleMaps.Rd
 a551db5c5399b9b39aa322086600db20 *man/plotGoogleMaps.Rd
 bdb8070ffee9b77bb0ca71a44904ad0a *man/segmentGoogleMaps.Rd
-eb3b1529945839ba4243387fa33286d1 *vignettes/plotGoogleMaps-intro.Rnw
-1862918d49f02378693addaf65ad0631 *vignettes/plotGoogleMaps.pdf
+512aef0e3922f81b22772f54600d07b3 *vignettes/plotGoogleMaps-intro.Rnw
+018a82e13f617614c29dbb7bd51486fa *vignettes/plotGoogleMaps.pdf

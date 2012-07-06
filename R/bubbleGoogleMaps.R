@@ -47,12 +47,11 @@ disableDefaultUI=FALSE
 	data = obj@data
 	if (NCOL(data) == 1){
 		z = data
-	}else {
+	         }else {
     	z = data[, zcol]  }
     	# avoid negative values
-    	if (min(key.entries)<0 ){
-    	ke<-abs(min(key.entries))+ key.entries+mean(key.entries)
-    	}else{ke<-key.entries+mean(key.entries)}     # no zeros for radius vecor
+    
+    	ke<-abs(key.entries)     # no zeros as max for radius vecor
     	# creating a vector for subgroups
     	if(do.sqrt){
     	scale.level<- sqrt(ke/(max(ke)) ) }else{scale.level<-ke/(max(ke))}
@@ -94,6 +93,11 @@ layerName=nameOfSP}
 if(strokeColor!=""){
 rgbc<-col2rgb(strokeColor)
 strokeColor<-rgb(rgbc[1],rgbc[2],rgbc[3],maxColorValue=255) }
+
+if(is.null(colPalette) & min(key.entries)<0){
+  colPalette=rep("#99000D",length(key.entries))
+  colPalette[which(key.entries<0)]="#084594"
+                                       }
 
 if(!is.null(colPalette)){
 rgbc<-col2rgb(colPalette)
