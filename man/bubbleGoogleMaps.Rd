@@ -47,7 +47,7 @@
                         map="map",
                         mapCanvas="map_canvas",
                         css = "",
-                        api="https://maps.google.com/maps/api/js?sensor=false",
+                        api="https://maps.google.com/maps/api/js?sensor=false&v=3.18",
                         openMap=TRUE)}
 \arguments{\item{SP}{object of \link[sp]{SpatialPointsDataFrame-class} with
           associated coordinate reference systems}
@@ -122,7 +122,7 @@
 }
 \value{This function returns a list with HTML, JavaScript, Google Maps API key and
        else what is necessary for the final web map. The second output is htm file ready to use stored in working direcoty.}
-\author{Milan Kilibarda \email{kili@grf.bg.ac.rs}}
+\author{Milan Kilibarda \email{kili@grf.bg.ac.rs} and Petr Stepanek}
 
 \seealso{
 \link{plotGoogleMaps},

@@ -48,7 +48,7 @@ plotGoogleMaps(SP,
               map="map",
               mapCanvas="map_canvas",
               css = "",                                     
-              api="https://maps.google.com/maps/api/js?sensor=false",
+              api="https://maps.google.com/maps/api/js?sensor=false&v=3.18",
               openMap=TRUE) }
 \arguments{
   \item{SP}{object of \link[sp]{Spatial-class} with
@@ -145,7 +145,7 @@ proj4string(cl) <- CRS('+init=epsg:28992')
 m<-plotGoogleMaps(meuse) 
 
 # Combine point and line data
-mapMeusePoints<- plotGoogleMaps(meuse,add=TRUE,mapTypeId='TERRAIN')
+mapMeusePoints<- plotGoogleMaps(meuse,add=TRUE,mapTypeId='TERRAIN',filename='myMap2.htm')
 mapMeuseCl<- plotGoogleMaps(cl,previousMap=mapMeusePoints,filename='myMap2.htm')
 # see results in your working directory
 }

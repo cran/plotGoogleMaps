@@ -43,7 +43,7 @@ function(SP,
                             map="map",
                             mapCanvas="map_canvas",
                             css = "",
-                            api="https://maps.google.com/maps/api/js?sensor=false",
+                            api="https://maps.google.com/maps/api/js?sensor=false&v=3.18",
                             openMap= TRUE
                                ){
  
@@ -66,16 +66,19 @@ if(filename==""){
   temporary = TRUE
 }
 
-if (!(class(SP)[1]=="SpatialPixelsDataFrame" || class(SP)[1]=="SpatialGridDataFrame" || class(SP)[1]=="RasterLayer") ){
-  
-   SP.ll <- spTransform(SP, CRS("+proj=longlat +datum=WGS84"))
-  
-} else if(class(SP)[1]!="RasterLayer"){
-  SP <- raster(SP, layer=zcol)
 
+if(class(SP)[1]=="RasterLayer"){
   SP<- projectRaster( SP , crs=CRS("+proj=longlat +datum=WGS84"))
   SP <- as(SP , 'SpatialGridDataFrame')
   SP.ll <- SP
+}
+if ((class(SP)[1]=="SpatialPixelsDataFrame" || class(SP)[1]=="SpatialGridDataFrame" ) ){
+  r <- raster(SP, layer=zcol)
+  SP<- projectRaster( r , crs=CRS("+proj=longlat +datum=WGS84"))
+  SP <- as(SP , 'SpatialGridDataFrame')
+  SP.ll <- SP
+} else{
+  SP.ll <- spTransform(SP, CRS("+proj=longlat +datum=WGS84"))
 }
 
 disableDefaultUI=FALSE
@@ -663,7 +666,7 @@ infW<- paste ( lapply(as.list(1:length(SP.ll@polygons)), function(i) paste(infW,
                                                                     content=att[i],
                                                                     map=InfoWindowControl$map,
                                                                     event=InfoWindowControl$event,
-                                                                    position= InfoWindowControl$position,
+                                                                    position= SP.ll[i,]@polygons[[1]]@labpt,
                                                                     disableAutoPan = InfoWindowControl$disableAutoPan,
                                                                     maxWidth=InfoWindowControl$maxWidth,
                                                                     pixelOffset=InfoWindowControl$pixelOffset,

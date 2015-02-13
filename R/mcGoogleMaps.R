@@ -39,10 +39,8 @@ mcGoogleMaps <-
            map="map",
            mapCanvas="map_canvas",
            css = "",
-           api="https://maps.google.com/maps/api/js?sensor=false",
-           apiMarkerClusterer=paste('"http://google-maps-utility-library-v3.',
-                                    'googlecode.com/svn/trunk/',
-                                    'markerclusterer/src/markerclusterer.js"',sep=""),
+           api="https://maps.google.com/maps/api/js?sensor=false&v=3.18",
+           apiMarkerClusterer='',
            openMap= TRUE
   ){
   
@@ -57,6 +55,10 @@ if(filename==""){
   filename <- tempfile("map", fileext = c(".html"))
   temporary = TRUE
 }
+if(apiMarkerClusterer==''){
+  apiMarkerClusterer='https://google-maps-utility-library-v3.googlecode.com/svn/tags/markerclusterer/1.0.2/src/markerclusterer_compiled.js'
+}
+
 
 if (!(class(SP)[1]=="SpatialPixelsDataFrame" || class(SP)[1]=="SpatialGridDataFrame" || class(SP)[1]=="RasterLayer") ){
   
